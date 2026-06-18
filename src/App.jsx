@@ -141,8 +141,51 @@ Respond ONLY with a valid JSON array (no markdown, no explanation) in this exact
 Be realistic with portions — a normal home-cooked serving, not a restaurant portion. If the user mentions a small amount, estimate accordingly. Round all values to 1 decimal place.`;
 
 // ── Storage helpers (namespaced by userId) ──────────────────────────────────
+// ── Supabase config ──────────────────────────────────────────────────────────
+const SUPABASE_URL = "https://eaakmlmxlxdsypfuuhhx.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVhYWttbG14bHhkc3lwZnV1aGh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NjUxMzIsImV4cCI6MjA5NzM0MTEzMn0.zFhuabKpY0YXfv2uTntoRSfZCkKWHekp1XFM0yAaxQo";
+
+const sbGet = async (userKey) => {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/tracker_data?user_key=eq.${encodeURIComponent(userKey)}&select=value`, {
+      headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
+    });
+    const data = await res.json();
+    if (data && data[0]) return JSON.parse(data[0].value);
+    return null;
+  } catch { return null; }
+};
+
+const sbSet = async (userKey, val) => {
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/tracker_data`, {
+      method: "POST",
+      headers: {
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        "Content-Type": "application/json",
+        "Prefer": "resolution=merge-duplicates"
+      },
+      body: JSON.stringify({ user_key: userKey, value: JSON.stringify(val), updated_at: new Date().toISOString() })
+    });
+  } catch {}
+};
+
+// Write-through cache: localStorage for speed, Supabase for persistence
 const lsGet = (key, uid) => { try { const v = localStorage.getItem(`keto_${uid}_${key}`); return v ? JSON.parse(v) : null; } catch { return null; } };
-const lsSet = (key, uid, val) => { try { localStorage.setItem(`keto_${uid}_${key}`, JSON.stringify(val)); } catch {} };
+const lsSet = (key, uid, val) => {
+  try { localStorage.setItem(`keto_${uid}_${key}`, JSON.stringify(val)); } catch {}
+  sbSet(`keto_${uid}_${key}`, val);
+};
+
+// Load from Supabase and sync to localStorage
+const syncFromCloud = async (key, uid) => {
+  const val = await sbGet(`keto_${uid}_${key}`);
+  if (val !== null) {
+    try { localStorage.setItem(`keto_${uid}_${key}`, JSON.stringify(val)); } catch {}
+  }
+  return val;
+};
 
 // ── One-time migration: copy old single-user data into "me" profile ──────────
 const runMigration = () => {
@@ -626,7 +669,7 @@ function UserTracker({ userId, profile, profiles }) {
   const [readingsHistory, setReadingsHistory] = useState({});
   const [readingForm, setReadingForm] = useState({ glucose: "", ketone: "", bpSystolic: "", bpDiastolic: "", note: "" });
 
-  // Load on userId change
+  // Load on userId change — localStorage first (fast), then sync from Supabase
   useEffect(() => {
     const saved = lsGet("entries_" + todayKey(), userId);
     setEntries(saved || []);
@@ -649,6 +692,34 @@ function UserTracker({ userId, profile, profiles }) {
     setReadings(rh[todayKey()] || []);
     // My Foods is shared between both users
     try { const mf = localStorage.getItem("keto_shared_my_foods"); setMyFoods(mf ? JSON.parse(mf) : []); } catch { setMyFoods([]); }
+
+    // Sync from Supabase in background — updates state if cloud has newer data
+    (async () => {
+      const keys = [
+        ["entries_" + todayKey(), (v) => setEntries(v || [])],
+        ["history", (v) => setHistory(v || {})],
+        ["burn_log", (v) => setBurnLog(v || {})],
+        ["eaten_override", (v) => setEatenOverride(v || {})],
+        ["supp_log", (v) => setSuppLog(v || {})],
+        ["off_days", (v) => setOffDays(v || {})],
+        ["readings_history", (v) => { setReadingsHistory(v || {}); setReadings((v || {})[todayKey()] || []); }],
+      ];
+      for (const [key, setter] of keys) {
+        const val = await syncFromCloud(key, userId);
+        if (val !== null) setter(val);
+      }
+      // Sync mag/pot separately due to type coercion
+      const ms2 = await syncFromCloud("mag_supp", userId);
+      if (ms2 !== null) setMagSupp(ms2 === true ? 400 : ms2 === false ? 0 : Number(ms2));
+      const ps2 = await syncFromCloud("pot_supp", userId);
+      if (ps2 !== null) setPotSupp(Math.max(0, Number(ps2)));
+      // Sync shared my foods
+      const mf2 = await sbGet("keto_shared_my_foods");
+      if (mf2 !== null) {
+        try { localStorage.setItem("keto_shared_my_foods", JSON.stringify(mf2)); } catch {}
+        setMyFoods(mf2);
+      }
+    })();
   }, [userId]);
 
   useEffect(() => {
@@ -691,7 +762,7 @@ function UserTracker({ userId, profile, profiles }) {
     setReadingsHistory(rh);
   }, [readings, userId]);
   // My Foods saved to shared key so both profiles see the same list
-  useEffect(() => { try { localStorage.setItem("keto_shared_my_foods", JSON.stringify(myFoods)); } catch {} }, [myFoods]);
+  useEffect(() => { try { localStorage.setItem("keto_shared_my_foods", JSON.stringify(myFoods)); } catch {} sbSet("keto_shared_my_foods", myFoods); }, [myFoods]);
 
   const rawTotals = entries.reduce((acc, e) => ({
     calories: acc.calories + (e.calories || 0), fat: acc.fat + (e.fat || 0),
@@ -2018,7 +2089,7 @@ export default function KetoTracker() {
   const [activeUser, setActiveUser] = useState("me");
   const [showSetup, setShowSetup] = useState(null); // null | "new" | profileId
 
-  // Load profiles from localStorage, seed with defaults if first time
+  // Load profiles — localStorage first, then sync from Supabase
   useEffect(() => {
     try {
       const saved = localStorage.getItem("keto_profiles");
@@ -2027,13 +2098,23 @@ export default function KetoTracker() {
       } else {
         setProfiles(DEFAULT_PROFILES);
         localStorage.setItem("keto_profiles", JSON.stringify(DEFAULT_PROFILES));
+        sbSet("keto_profiles", DEFAULT_PROFILES);
       }
     } catch { setProfiles(DEFAULT_PROFILES); }
+    // Sync from cloud
+    (async () => {
+      const val = await sbGet("keto_profiles");
+      if (val !== null) {
+        try { localStorage.setItem("keto_profiles", JSON.stringify(val)); } catch {}
+        setProfiles(val);
+      }
+    })();
   }, []);
 
   const saveProfiles = (updated) => {
     setProfiles(updated);
     localStorage.setItem("keto_profiles", JSON.stringify(updated));
+    sbSet("keto_profiles", updated);
   };
 
   const handleSaveProfile = (form) => {

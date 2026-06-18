@@ -158,13 +158,13 @@ const sbGet = async (userKey) => {
 
 const sbSet = async (userKey, val) => {
   try {
-    await fetch(`${SUPABASE_URL}/rest/v1/tracker_data`, {
+    await fetch(`${SUPABASE_URL}/rest/v1/tracker_data?on_conflict=user_key`, {
       method: "POST",
       headers: {
         "apikey": SUPABASE_ANON_KEY,
         "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
         "Content-Type": "application/json",
-        "Prefer": "resolution=merge-duplicates"
+        "Prefer": "resolution=merge-duplicates,return=minimal"
       },
       body: JSON.stringify({ user_key: userKey, value: JSON.stringify(val), updated_at: new Date().toISOString() })
     });

@@ -669,60 +669,57 @@ function UserTracker({ userId, profile, profiles }) {
   const [readingsHistory, setReadingsHistory] = useState({});
   const [readingForm, setReadingForm] = useState({ glucose: "", ketone: "", bpSystolic: "", bpDiastolic: "", note: "" });
 
-  // Load on userId change — localStorage first (fast), then sync from Supabase
+  // Load on userId change — Supabase first, localStorage as fallback
   useEffect(() => {
-    const saved = lsGet("entries_" + todayKey(), userId);
-    setEntries(saved || []);
-    const hist = lsGet("history", userId);
-    setHistory(hist || {});
-    const bl = lsGet("burn_log", userId);
-    setBurnLog(bl || {});
-    const eo = lsGet("eaten_override", userId);
-    setEatenOverride(eo || {});
-    const ms = lsGet("mag_supp", userId);
-    setMagSupp(ms !== null ? (ms === true ? 400 : ms === false ? 0 : Number(ms)) : (profile?.defaultMagSupp ?? 400));
-    const ps = lsGet("pot_supp", userId);
-    setPotSupp(ps !== null ? Math.max(0, Number(ps)) : (profile?.defaultPotSupp ?? 0));
-    const sl = lsGet("supp_log", userId);
-    setSuppLog(sl || {});
-    const od = lsGet("off_days", userId);
-    setOffDays(od || {});
-    const rh = lsGet("readings_history", userId) || {};
-    setReadingsHistory(rh);
-    setReadings(rh[todayKey()] || []);
-    // My Foods is shared between both users
-    try { const mf = localStorage.getItem("keto_shared_my_foods"); setMyFoods(mf ? JSON.parse(mf) : []); } catch { setMyFoods([]); }
-
-    // Sync from Supabase in background — updates state if cloud has newer data
     (async () => {
-      const keys = [
-        ["entries_" + todayKey(), (v) => setEntries(v || [])],
-        ["history", (v) => setHistory(v || {})],
-        ["burn_log", (v) => setBurnLog(v || {})],
-        ["eaten_override", (v) => setEatenOverride(v || {})],
-        ["supp_log", (v) => setSuppLog(v || {})],
-        ["off_days", (v) => setOffDays(v || {})],
-        ["readings_history", (v) => { setReadingsHistory(v || {}); setReadings((v || {})[todayKey()] || []); }],
-      ];
-      for (const [key, setter] of keys) {
-        const val = await syncFromCloud(key, userId);
-        if (val !== null) setter(val);
-      }
-      // Sync mag/pot separately due to type coercion
-      const ms2 = await syncFromCloud("mag_supp", userId);
-      if (ms2 !== null) setMagSupp(ms2 === true ? 400 : ms2 === false ? 0 : Number(ms2));
-      const ps2 = await syncFromCloud("pot_supp", userId);
-      if (ps2 !== null) setPotSupp(Math.max(0, Number(ps2)));
-      // Sync shared my foods
-      const mf2 = await sbGet("keto_shared_my_foods");
+      // Try Supabase first
+      const [hist, bl, eo, sl, od, rh, ms2, ps2, mf2, todayEntries] = await Promise.all([
+        syncFromCloud("history", userId),
+        syncFromCloud("burn_log", userId),
+        syncFromCloud("eaten_override", userId),
+        syncFromCloud("supp_log", userId),
+        syncFromCloud("off_days", userId),
+        syncFromCloud("readings_history", userId),
+        syncFromCloud("mag_supp", userId),
+        syncFromCloud("pot_supp", userId),
+        sbGet("keto_shared_my_foods"),
+        syncFromCloud("entries_" + todayKey(), userId),
+      ]);
+
+      // Set from cloud or fall back to localStorage
+      const history = hist || lsGet("history", userId) || {};
+      setHistory(history);
+      setBurnLog(bl || lsGet("burn_log", userId) || {});
+      setEatenOverride(eo || lsGet("eaten_override", userId) || {});
+      setSuppLog(sl || lsGet("supp_log", userId) || {});
+      setOffDays(od || lsGet("off_days", userId) || {});
+      const readHist = rh || lsGet("readings_history", userId) || {};
+      setReadingsHistory(readHist);
+      setReadings(readHist[todayKey()] || []);
+
+      const ms = ms2 ?? lsGet("mag_supp", userId);
+      setMagSupp(ms !== null ? (ms === true ? 400 : ms === false ? 0 : Number(ms)) : (profile?.defaultMagSupp ?? 400));
+      const ps = ps2 ?? lsGet("pot_supp", userId);
+      setPotSupp(ps !== null ? Math.max(0, Number(ps)) : (profile?.defaultPotSupp ?? 0));
+
+      // Today's entries — prefer cloud, fall back to history[today], then localStorage
+      const todayFromHistory = history[todayKey()] || [];
+      const savedEntries = todayEntries || todayFromHistory || lsGet("entries_" + todayKey(), userId) || [];
+      setEntries(savedEntries);
+
+      // My Foods
       if (mf2 !== null) {
         try { localStorage.setItem("keto_shared_my_foods", JSON.stringify(mf2)); } catch {}
         setMyFoods(mf2);
+      } else {
+        try { const mf = localStorage.getItem("keto_shared_my_foods"); setMyFoods(mf ? JSON.parse(mf) : []); } catch { setMyFoods([]); }
       }
     })();
   }, [userId]);
 
+  const isInitialLoad = useRef(true);
   useEffect(() => {
+    if (isInitialLoad.current) { isInitialLoad.current = false; return; }
     lsSet("entries_" + todayKey(), userId, entries);
     const hist = lsGet("history", userId) || {};
     hist[todayKey()] = entries;

@@ -264,12 +264,39 @@ const dbSet = async (token, profileId, dataKey, val) => {
 
 const dbGetProfiles = async (token) => {
   try {
-    // Get current user first, then filter profiles by owner_id
     const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, { headers: authHeaders(token) });
     const user = await userRes.json();
     if (!user?.id) return [];
     const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?owner_id=eq.${user.id}&select=*`, { headers: authHeaders(token) });
     return await res.json();
+  } catch { return []; }
+};
+
+const dbGetSharedProfiles = async (token) => {
+  try {
+    // Get profiles shared with the current user via profile_permissions
+    const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, { headers: authHeaders(token) });
+    const user = await userRes.json();
+    if (!user?.email) return [];
+    // Get accepted permissions for this user's email
+    const permRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/profile_permissions?invited_email=eq.${encodeURIComponent(user.email.toLowerCase())}&accepted=eq.true&select=profile_id,permission`,
+      { headers: authHeaders(token) }
+    );
+    const perms = await permRes.json();
+    if (!Array.isArray(perms) || perms.length === 0) return [];
+    // Fetch each shared profile
+    const profileIds = perms.map(p => p.profile_id);
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/profiles?id=in.(${profileIds.join(",")})&select=*`,
+      { headers: authHeaders(token) }
+    );
+    const profiles = await res.json();
+    // Attach permission level to each profile
+    return profiles.map(p => ({
+      ...p,
+      _sharedPermission: perms.find(perm => perm.profile_id === p.id)?.permission || "viewer"
+    }));
   } catch { return []; }
 };
 
@@ -2590,6 +2617,13 @@ function KetoTrackerInner() {
           dbProfiles = Array.isArray(res) ? res : [];
         } catch { dbProfiles = []; }
 
+        // Also fetch profiles shared with this user
+        let sharedProfiles = [];
+        try {
+          const shared = await dbGetSharedProfiles(session.accessToken);
+          if (Array.isArray(shared)) sharedProfiles = shared;
+        } catch {}
+
         if (dbProfiles.length === 0) {
           // First time — create default profiles in Supabase
           const user = await getUser(session.accessToken);
@@ -2627,9 +2661,26 @@ function KetoTrackerInner() {
           defaultCalSupp: p.default_cal_supp, calSuppStep: p.cal_supp_step,
         }));
 
-        setProfiles(mapped);
+        // Map shared profiles and mark them
+        const mappedShared = sharedProfiles.map(p => ({
+          id: p.id,
+          name: p.name, icon: p.icon,
+          weight: p.weight, height: p.height, age: p.age, sex: p.sex,
+          activity: p.activity, goal: p.goal, dietType: p.diet_type,
+          hypertension: p.hypertension, osteopenia: p.osteopenia,
+          arbMedication: p.arb_medication,
+          customCarbs: p.custom_carbs, loggingBias: p.logging_bias,
+          quickLogBias: p.quick_log_bias, glucoseUnit: p.glucose_unit,
+          defaultMagSupp: p.default_mag_supp, defaultPotSupp: p.default_pot_supp,
+          defaultCalSupp: p.default_cal_supp, calSuppStep: p.cal_supp_step,
+          _shared: true,
+          _sharedPermission: p._sharedPermission,
+        }));
+
+        const allProfiles = [...mapped, ...mappedShared];
+        setProfiles(allProfiles);
         setActiveUser(mapped[0].id);
-        localStorage.setItem("keto_profiles", JSON.stringify(mapped));
+        localStorage.setItem("keto_profiles", JSON.stringify(allProfiles));
       } catch (e) {
         console.warn("Profile load failed, using localStorage:", e);
         const saved = localStorage.getItem("keto_profiles");

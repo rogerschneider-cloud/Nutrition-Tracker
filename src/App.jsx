@@ -428,7 +428,7 @@ const SEEDED_MY_FOODS = [
   { id: "mf_ricotta_homemade", name: "Homemade Ricotta from 3% Milk (per 100g)", calories: 174, fat: 10, protein: 11, carbs: 7, fiber: 0, sodium: 45, calcium: 207, magnesium: 0, potassium: 0, _unit: "g" },
   { id: "mf_sour_cream_full_fat", name: "Sour Cream Full Fat - Tnuva (per 100g)", calories: 265, fat: 27, protein: 2.4, carbs: 3, fiber: 0, sodium: 45, calcium: 0, magnesium: 0, potassium: 0, _unit: "g" },
 ];
-const SEED_VERSION = 6; // increment when SEEDED_MY_FOODS changes
+const SEED_VERSION = 7; // increment when SEEDED_MY_FOODS changes
 try {
   const raw = localStorage.getItem("keto_shared_my_foods");
   const existing = raw ? JSON.parse(raw) : [];
@@ -2330,7 +2330,15 @@ function LoginScreen({ onAuth }) {
       if (mode === "signup") {
         const res = await signUp(email, password);
         if (res.error) { setError(res.error.message || "Sign up failed"); }
-        else { setSuccess("Check your email to confirm your account, then sign in."); setMode("signin"); }
+        else if (res.access_token) {
+          // Email confirmation disabled — logged in directly
+          localStorage.setItem("nt_access_token", res.access_token);
+          localStorage.setItem("nt_refresh_token", res.refresh_token);
+          onAuth({ accessToken: res.access_token, refreshToken: res.refresh_token, user: res.user });
+        } else {
+          setSuccess("Account created! Sign in with your email and password.");
+          setMode("signin");
+        }
       } else {
         const res = await signIn(email, password);
         if (res.error) { setError(res.error.message || "Sign in failed"); }

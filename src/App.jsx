@@ -957,7 +957,7 @@ function UserTracker({ userId, profile, profiles }) {
     setAnalyzing(true); setAnalyzeError(""); setAnalyzeResult(null); setAnalyzeNote("");
     try {
       const userContent = analyzeText;
-      const resp = await fetch("https://api.anthropic.com/v1/messages", {
+      const resp = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 1000, system: ANALYZE_PROMPT, messages: [{ role: "user", content: userContent }] }),
@@ -985,7 +985,7 @@ function UserTracker({ userId, profile, profiles }) {
   const runQuickLog = async () => {
     setQuickLogging(true); setQuickLogError(""); setQuickLogResults(null);
     try {
-      const resp = await fetch("https://api.anthropic.com/v1/messages", {
+      const resp = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

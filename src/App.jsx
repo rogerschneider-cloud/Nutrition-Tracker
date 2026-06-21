@@ -951,15 +951,15 @@ function UserTracker({ userId, profile, profiles }) {
     const img = new Image();
     const objectUrl = URL.createObjectURL(file);
     img.onload = () => {
-      // Resize to max 800px on longest side
-      const MAX = 800;
+      // Resize to max 1024px on longest side
+      const MAX = 1024;
       let { width, height } = img;
       if (width > height && width > MAX) { height = Math.round(height * MAX / width); width = MAX; }
       else if (height > width && height > MAX) { width = Math.round(width * MAX / height); height = MAX; }
       else if (width > MAX) { height = Math.round(height * MAX / width); width = MAX; }
       canvas.width = width; canvas.height = height;
       canvas.getContext("2d").drawImage(img, 0, 0, width, height);
-      const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
       URL.revokeObjectURL(objectUrl);
       setAnalyzeImage({ base64: dataUrl.split(",")[1], mediaType: "image/jpeg", preview: dataUrl });
     };
@@ -985,6 +985,7 @@ function UserTracker({ userId, profile, profiles }) {
         body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 1000, system: ANALYZE_PROMPT, messages: [{ role: "user", content: userContent }] }),
       });
       const data = await resp.json();
+      if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
       const text = data.content.map(b => b.text || "").join("").replace(/```json|```/g, "").trim();
       const parsed = JSON.parse(text);
       setAnalyzeNote(parsed.note || "");
@@ -993,8 +994,8 @@ function UserTracker({ userId, profile, profiles }) {
       const fullNote = [note, userDesc].filter(Boolean).join(" | ");
       setAnalyzeNote(fullNote);
       setAnalyzeResult({ ...food, _unit: parsed.unit || "g" });
-    } catch {
-      setAnalyzeError("Couldn't analyze — try describing it in more detail.");
+    } catch (err) {
+      setAnalyzeError("Couldn't analyze — " + (err.message || "try describing it in more detail."));
     }
     setAnalyzing(false);
   };

@@ -264,7 +264,11 @@ const dbSet = async (token, profileId, dataKey, val) => {
 
 const dbGetProfiles = async (token) => {
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=*`, { headers: authHeaders(token) });
+    // Get current user first, then filter profiles by owner_id
+    const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, { headers: authHeaders(token) });
+    const user = await userRes.json();
+    if (!user?.id) return [];
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?owner_id=eq.${user.id}&select=*`, { headers: authHeaders(token) });
     return await res.json();
   } catch { return []; }
 };

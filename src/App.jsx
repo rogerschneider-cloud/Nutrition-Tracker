@@ -721,17 +721,21 @@ function UserTracker({ userId, profile, profiles }) {
       } else {
         try { const mf = localStorage.getItem("keto_shared_my_foods"); setMyFoods(mf ? JSON.parse(mf) : []); } catch { setMyFoods([]); }
       }
+      setDataLoaded(true);
+      dataLoadedRef.current = true;
     })();
   }, [userId]);
 
-  const isInitialLoad = useRef(true);
+  const [dataLoaded, setDataLoaded] = useState(false);
+  const dataLoadedRef = React.useRef(false);
   useEffect(() => {
-    if (isInitialLoad.current) { isInitialLoad.current = false; return; }
+    if (!dataLoadedRef.current) return;
     lsSet("entries_" + todayKey(), userId, entries);
-    const hist = lsGet("history", userId) || {};
-    hist[todayKey()] = entries;
-    lsSet("history", userId, hist);
-    setHistory(hist);
+    setHistory(prev => {
+      const hist = { ...prev, [todayKey()]: entries };
+      lsSet("history", userId, hist);
+      return hist;
+    });
   }, [entries, userId]);
 
   useEffect(() => { lsSet("burn_log", userId, burnLog); }, [burnLog, userId]);

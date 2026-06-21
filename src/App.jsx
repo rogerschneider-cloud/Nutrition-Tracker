@@ -1,3 +1,4 @@
+// v5.1
 import { useState, useEffect, useRef } from "react";
 
 // ── Diet presets ─────────────────────────────────────────────────────────────

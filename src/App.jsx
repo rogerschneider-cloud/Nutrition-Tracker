@@ -1406,9 +1406,21 @@ function UserTracker({ userId, profile, profiles }) {
             <div>
               {!analyzeResult ? (
                 <>
-                  <div style={{ background: "#1a1400", border: "1px solid #3a2e00", borderRadius: 10, padding: "10px 14px", marginBottom: 10, fontSize: 11, color: "#c9a96e", lineHeight: 1.5 }}>
+                  {/* Photo upload */}
+                  <div style={{ marginBottom: 10 }}>
+                    <label style={{ display: "flex", alignItems: "center", gap: 8, background: "#1a1a1a", border: "1px dashed #333", borderRadius: 10, padding: "10px 14px", cursor: "pointer" }}>
+                      <span style={{ fontSize: 20 }}>📷</span>
+                      <span style={{ fontSize: 12, color: "#888" }}>{analyzeImage ? "Photo ready — tap to change" : "Tap to add a photo (optional)"}</span>
+                      <input type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={e => handleImageFile(e.target.files[0])} />
+                    </label>
+                    {analyzeImage && (
+                      <div style={{ marginTop: 6, position: "relative", display: "inline-block" }}>
+                        <img src={analyzeImage.preview} alt="preview" style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 8 }} />
+                        <button onClick={() => setAnalyzeImage(null)} style={{ position: "absolute", top: -6, right: -6, background: "#333", border: "none", borderRadius: "50%", width: 20, height: 20, color: "#fff", fontSize: 12, cursor: "pointer", lineHeight: 1 }}>×</button>
+                      </div>
+                    )}
                   </div>
-                  <textarea placeholder={analyzeMode === "photo" ? "Optional: add context (e.g. 'homemade, generous portion')" : "Describe your meal… e.g. 'pan-fried salmon with steamed broccoli and butter'"}
+                  <textarea placeholder={analyzeImage ? "Optional: add context (e.g. 'homemade, generous portion')" : "Describe your meal… e.g. 'pan-fried salmon with steamed broccoli and butter'"}
                     value={analyzeText} onChange={e => setAnalyzeText(e.target.value)}
                     style={{ ...s.input, minHeight: 80, resize: "vertical" }} />
                   <button onClick={runAnalysis} disabled={analyzing || (!analyzeText && !analyzeImage)} style={{ ...s.btn(), width: "100%", opacity: analyzing || (!analyzeText && !analyzeImage) ? 0.5 : 1 }}>

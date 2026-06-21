@@ -806,7 +806,7 @@ const TrendsView = ({ history, entries, eatenOverride, burnLog, magSupp, userId,
 };
 
 // ── Per-user tracker ─────────────────────────────────────────────────────────
-function UserTracker({ userId, profile, profiles }) {
+function UserTracker({ userId, profile, profiles, session }) {
   const [entries, setEntries] = useState([]);
   const [search, setSearch] = useState("");
   const [myFoodsSearch, setMyFoodsSearch] = useState("");
@@ -2839,7 +2839,7 @@ function KetoTrackerInner() {
 
       {/* Per-user content */}
       {activeProfile && (
-        <UserTracker key={activeUser} userId={activeUser} profile={activeProfile} profiles={profiles} />
+        <UserTracker key={activeUser} userId={activeUser} profile={activeProfile} profiles={profiles} session={session} />
       )}
     </div>
   );

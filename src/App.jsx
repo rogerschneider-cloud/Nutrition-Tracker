@@ -2489,6 +2489,19 @@ function LoginScreen({ onAuth }) {
 
 export default function KetoTracker() {
   const [session, setSession] = useState(() => {
+    // Handle password reset / magic link tokens in URL hash
+    const hash = window.location.hash;
+    if (hash && hash.includes("access_token")) {
+      const params = new URLSearchParams(hash.replace("#", "?"));
+      const token = params.get("access_token");
+      const refresh = params.get("refresh_token");
+      if (token) {
+        localStorage.setItem("nt_access_token", token);
+        if (refresh) localStorage.setItem("nt_refresh_token", refresh);
+        window.history.replaceState({}, "", window.location.pathname);
+        return { accessToken: token, refreshToken: refresh };
+      }
+    }
     const token = localStorage.getItem("nt_access_token");
     const refresh = localStorage.getItem("nt_refresh_token");
     return token ? { accessToken: token, refreshToken: refresh } : null;
@@ -2549,8 +2562,11 @@ export default function KetoTracker() {
     (async () => {
       try {
         // Load from Supabase profiles table
-        let dbProfiles = await dbGetProfiles(session.accessToken);
-        if (!Array.isArray(dbProfiles)) dbProfiles = [];
+        let dbProfiles = [];
+        try {
+          const res = await dbGetProfiles(session.accessToken);
+          dbProfiles = Array.isArray(res) ? res : [];
+        } catch { dbProfiles = []; }
 
         if (dbProfiles.length === 0) {
           // First time — create default profiles in Supabase

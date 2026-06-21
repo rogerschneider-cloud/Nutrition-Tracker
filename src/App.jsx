@@ -44,7 +44,7 @@ const calcTargets = (profile) => {
 
 const calcMineralTargets = (profile) => ({
   sodium: profile.hypertension ? 1800 : 2300,
-  calcium: profile.osteopenia ? 2000 : 2000,
+  calcium: profile.osteopenia ? 2000 : 1000,
   magnesium: profile.customMagnesium ?? (profile.sex === "female" ? 320 : 420),
   potassium: profile.customPotassium ?? (profile.arbMedication ? 3000 : 3500),
 });
@@ -279,6 +279,13 @@ const SEEDED_MY_FOODS = [
   { id: "mf_egg_mushroom_scramble_mozz", name: "Egg & Mushroom Scramble with Mozzarella (1 serving)", calories: 387.2, fat: 28.6, protein: 26.4, carbs: 3.1, fiber: 0.5, sodium: 420, calcium: 148.2, magnesium: 22.4, potassium: 362.5, _unit: "each" },
   { id: "mf_white_bean_beef_chilli", name: "White Bean Chilli with Beef (per 100g)", calories: 118, fat: 4.2, protein: 8.8, carbs: 10.2, fiber: 2.8, sodium: 210, calcium: 38, magnesium: 22, potassium: 380, _unit: "g" },
   { id: "mf_tnuva_bio_yogurt_3", name: "Tnuva Bio Yogurt 3% (per 100g)", calories: 64, fat: 3, protein: 5.3, carbs: 4, fiber: 0, sodium: 50, calcium: 250, magnesium: 0, potassium: 0, _unit: "g" },
+  { id: "mf_sardines_tomato_moroccan", name: "Sardines in Tomato Sauce Moroccan (per 100g)", calories: 164, fat: 10.5, protein: 16.1, carbs: 0, fiber: 0, sodium: 156, calcium: 0, magnesium: 0, potassium: 0, _unit: "g" },
+  { id: "mf_dehydrated_beet_greens", name: "Dehydrated Beet Greens homemade (per 100g)", calories: 256, fat: 4, protein: 23.3, carbs: 46.7, fiber: 25.3, sodium: 1980, calcium: 1460, magnesium: 653, potassium: 7053, _unit: "g" },
+  { id: "mf_dehydrated_dragon_kale", name: "Dehydrated Dragon Kale homemade (per 100g)", calories: 353, fat: 6, protein: 23.3, carbs: 56.7, fiber: 12.7, sodium: 293, calcium: 900, magnesium: 153, potassium: 2320, _unit: "g" },
+  { id: "mf_tofu_firm", name: "Tofu Firm (per 100g)", calories: 76, fat: 4.2, protein: 8, carbs: 1.9, fiber: 0.3, sodium: 7, calcium: 350, magnesium: 30, potassium: 121, _unit: "g" },
+  { id: "mf_feta_cheese", name: "Feta Cheese (per 100g)", calories: 264, fat: 21, protein: 14, carbs: 4, fiber: 0, sodium: 917, calcium: 493, magnesium: 19, potassium: 62, _unit: "g" },
+  { id: "mf_ricotta_homemade", name: "Homemade Ricotta from 3% Milk (per 100g)", calories: 174, fat: 10, protein: 11, carbs: 7, fiber: 0, sodium: 45, calcium: 207, magnesium: 0, potassium: 0, _unit: "g" },
+  { id: "mf_sour_cream_full_fat", name: "Sour Cream Full Fat - Tnuva (per 100g)", calories: 265, fat: 27, protein: 2.4, carbs: 3, fiber: 0, sodium: 45, calcium: 0, magnesium: 0, potassium: 0, _unit: "g" },
 ];
 try {
   const raw = localStorage.getItem("keto_shared_my_foods");

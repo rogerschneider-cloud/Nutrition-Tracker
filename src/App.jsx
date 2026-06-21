@@ -1,4 +1,22 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Component } from "react";
+
+class ErrorBoundary extends Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(e) { return { error: e }; }
+  render() {
+    if (this.state.error) return (
+      <div style={{ padding: 30, background: "#111", color: "#ff6b6b", minHeight: "100vh", fontFamily: "sans-serif" }}>
+        <div style={{ fontSize: 18, marginBottom: 10 }}>App Error</div>
+        <div style={{ fontSize: 12, color: "#888", marginBottom: 20 }}>{this.state.error.message}</div>
+        <button onClick={() => { localStorage.clear(); window.location.reload(); }}
+          style={{ background: "#c9a96e", border: "none", borderRadius: 8, padding: "10px 20px", color: "#111", cursor: "pointer" }}>
+          Clear & Reload
+        </button>
+      </div>
+    );
+    return this.props.children;
+  }
+}
 
 // ── Diet presets ─────────────────────────────────────────────────────────────
 const DIET_PRESETS = {
@@ -2487,7 +2505,7 @@ function LoginScreen({ onAuth }) {
   );
 }
 
-export default function KetoTracker() {
+function KetoTrackerInner() {
   const [session, setSession] = useState(() => {
     // Handle password reset / magic link tokens in URL hash
     const hash = window.location.hash;
@@ -2826,3 +2844,5 @@ export default function KetoTracker() {
     </div>
   );
 }
+
+export default function KetoTracker() { return <ErrorBoundary><KetoTrackerInner /></ErrorBoundary>; }

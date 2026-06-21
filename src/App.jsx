@@ -63,8 +63,8 @@ const MAG_SUPPLEMENT = 400;
 
 // Default profiles (migrated from hardcoded setup)
 const DEFAULT_PROFILES = [
-  { id: "me", name: "Me", icon: "🧔", weight: 89, height: 175, age: 60, sex: "male", activity: "active", goal: "lose", dietType: "mediterranean", hypertension: false, osteopenia: false, customCarbs: 80, loggingBias: 10, quickLogBias: 15, glucoseUnit: "mmol" },
-  { id: "wife", name: "Liat", icon: "👩", weight: 75, height: 160, age: 58, sex: "female", activity: "moderate", goal: "lose", dietType: "mediterranean", hypertension: true, osteopenia: true, arbMedication: true, customCarbs: 80, loggingBias: 0, quickLogBias: 15, glucoseUnit: "mmol", defaultMagSupp: 320 },
+  { id: "me", name: "Me", icon: "🧔", weight: 89, height: 175, age: 60, sex: "male", activity: "active", goal: "lose", dietType: "mediterranean", hypertension: false, osteopenia: false, customCarbs: 80, loggingBias: 10, quickLogBias: 15, glucoseUnit: "mmol", defaultCalSupp: 600, calSuppStep: 300 },
+  { id: "wife", name: "Liat", icon: "👩", weight: 75, height: 160, age: 58, sex: "female", activity: "moderate", goal: "lose", dietType: "mediterranean", hypertension: true, osteopenia: true, arbMedication: true, customCarbs: 80, loggingBias: 0, quickLogBias: 15, glucoseUnit: "mmol", defaultMagSupp: 320, defaultCalSupp: 1000, calSuppStep: 250 },
 ];
 
 const PRESET_FOODS = [
@@ -95,13 +95,14 @@ const yesterdayKey = () => { const d = new Date(); d.setDate(d.getDate() - 1); r
 const formatDate = (key) => { const [, m, d] = key.split("-"); return `${d}/${m}`; };
 
 const ANALYZE_PROMPT = `You are a precise nutritionist. The user will describe a food or meal.
-Decide the best measurement unit:
-- Solid foods measured by WEIGHT: normalize to per 100g. Set "unit" to "g".
-- Liquid or blended drinks (smoothies, soups, juices, milk): normalize to per 100ml. Set "unit" to "ml".
-- Countable items (eggs, bars, muffins, strips): give values per 1 unit. Set "unit" to "each".
+
+Rules:
+- If the user specifies an exact weight or volume (e.g. "200g", "150ml"), give values for that EXACT amount. Set "unit" to "g" or "ml". Set "servings" to the specified amount.
+- If no weight is specified: solid foods normalize to per 100g; liquids/smoothies normalize to per 100ml; countable items (eggs, bars, muffins) give values per 1 unit and set "unit" to "each".
+
 Respond ONLY with a valid JSON object (no markdown, no explanation) in this exact shape:
 {
-  "name": "Short food name",
+  "name": "Short food name (include weight in name if specified, e.g. 'Chicken breast (200g)' or 'Greek Yogurt (per 100g)')",
   "unit": "g",
   "servings": 1,
   "note": "One sentence about what you identified and which base you used.",
@@ -338,12 +339,13 @@ function InfoButton({ topic, style }) {
   );
 }
 
-const MineralBar = ({ mineral, value, target, suppActive, potSuppActive, arbMedication }) => {
+const MineralBar = ({ mineral, value, target, suppActive, potSuppActive, calSuppActive, arbMedication }) => {
   const over = value > target;
   const color = MINERAL_COLORS[mineral];
   const isMag = mineral === "magnesium";
   const isPot = mineral === "potassium";
-  const suppVal = isMag && suppActive ? suppActive : isPot && potSuppActive ? potSuppActive : 0;
+  const isCal = mineral === "calcium";
+  const suppVal = isMag && suppActive ? suppActive : isPot && potSuppActive ? potSuppActive : isCal && calSuppActive ? calSuppActive : 0;
   const foodPct = Math.min((value - suppVal) / target, 1);
   const suppPct = suppVal ? Math.min(suppVal / target, 1 - foodPct) : 0;
   return (
@@ -354,6 +356,7 @@ const MineralBar = ({ mineral, value, target, suppActive, potSuppActive, arbMedi
           {isMag && <InfoButton topic="magnesiumTarget" style={{ marginLeft: 2 }} />}
           {isMag && suppActive && <span style={{ fontSize: 9, background: "#2a1f4a", color: "#b5a4f5", borderRadius: 10, padding: "1px 6px" }}>+{suppActive}mg supp</span>}
           {isPot && potSuppActive > 0 && <span style={{ fontSize: 9, background: "#1a2a1a", color: "#7ec8a4", borderRadius: 10, padding: "1px 6px" }}>+{potSuppActive}mg supp</span>}
+          {isCal && calSuppActive > 0 && <span style={{ fontSize: 9, background: "#2a1a0a", color: "#c9a96e", borderRadius: 10, padding: "1px 6px" }}>+{calSuppActive}mg supp</span>}
           {isPot && arbMedication && <span style={{ fontSize: 9, background: "#1a1a2a", color: "#7ec8e3", borderRadius: 10, padding: "1px 6px" }}>ℹ ARB med</span>}
         </div>
         <span style={{ fontSize: 12, fontFamily: "monospace", color: over ? "#ff4444" : "#aaa" }}>
@@ -643,6 +646,7 @@ function UserTracker({ userId, profile, profiles }) {
   const [suppEditDay, setSuppEditDay] = useState("");
   const [magSupp, setMagSupp] = useState(400); // mg of magnesium supplement
   const [potSupp, setPotSupp] = useState(0); // mg of potassium supplement (cream of tartar)
+  const [calSupp, setCalSupp] = useState(0); // mg of calcium supplement
   const [suppLog, setSuppLog] = useState({}); // { "YYYY-MM-DD": { mag: 400, pot: 0 } }
   const [myFoods, setMyFoods] = useState([]);
   const [expandedEntry, setExpandedEntry] = useState(null);
@@ -680,7 +684,7 @@ function UserTracker({ userId, profile, profiles }) {
   useEffect(() => {
     (async () => {
       // Try Supabase first
-      const [hist, bl, eo, sl, od, rh, ms2, ps2, mf2, todayEntries] = await Promise.all([
+      const [hist, bl, eo, sl, od, rh, ms2, ps2, cs2, mf2, todayEntries] = await Promise.all([
         syncFromCloud("history", userId),
         syncFromCloud("burn_log", userId),
         syncFromCloud("eaten_override", userId),
@@ -689,6 +693,7 @@ function UserTracker({ userId, profile, profiles }) {
         syncFromCloud("readings_history", userId),
         syncFromCloud("mag_supp", userId),
         syncFromCloud("pot_supp", userId),
+        syncFromCloud("cal_supp", userId),
         sbGet("keto_shared_my_foods"),
         syncFromCloud("entries_" + todayKey(), userId),
       ]);
@@ -708,6 +713,8 @@ function UserTracker({ userId, profile, profiles }) {
       setMagSupp(ms !== null ? (ms === true ? 400 : ms === false ? 0 : Number(ms)) : (profile?.defaultMagSupp ?? 400));
       const ps = ps2 ?? lsGet("pot_supp", userId);
       setPotSupp(ps !== null ? Math.max(0, Number(ps)) : (profile?.defaultPotSupp ?? 0));
+      const cs = cs2 ?? lsGet("cal_supp", userId);
+      setCalSupp(cs !== null ? Math.max(0, Number(cs)) : (profile?.defaultCalSupp ?? 0));
 
       // Today's entries — prefer cloud, fall back to history[today], then localStorage
       const todayFromHistory = history[todayKey()] || [];
@@ -751,6 +758,10 @@ function UserTracker({ userId, profile, profiles }) {
       return updated;
     });
   }, [magSupp, userId]);
+  useEffect(() => {
+    lsSet("cal_supp", userId, calSupp);
+    sbSet(`keto_${userId}_cal_supp`, calSupp);
+  }, [calSupp, userId]);
   useEffect(() => {
     lsSet("pot_supp", userId, potSupp);
     // Read magSupp from storage to avoid stale closure
@@ -801,6 +812,7 @@ function UserTracker({ userId, profile, profiles }) {
     sodium: totals.sodium, calcium: totals.calcium,
     magnesium: totals.magnesium + (magSupp || 0),
     potassium: totals.potassium + (potSupp || 0),
+    calcium: totals.calcium + (calSupp || 0),
   };
 
   const netCarbs = Math.max(0, totals.carbs - totals.fiber);
@@ -1148,10 +1160,16 @@ function UserTracker({ userId, profile, profiles }) {
               <span style={{ fontSize: 11, fontFamily: "monospace", color: (potSupp > 0) ? "#7ec8a4" : "#555", minWidth: 40, textAlign: "center", fontWeight: 700 }}>{(potSupp > 0) ? `${potSupp}mg` : "OFF"}</span>
               <button onClick={() => setPotSupp(p => Math.min(1000, p + 100))} style={{ background: "#1e1e1e", border: "1px solid #333", borderRadius: 6, width: 22, height: 22, color: "#aaa", fontSize: 14, cursor: "pointer", lineHeight: 1, padding: 0 }}>+</button>
             </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <span style={{ fontSize: 10, color: calSupp > 0 ? "#c9a96e" : "#555", fontWeight: 600, minWidth: 42 }}>Ca Supp</span>
+              <button onClick={() => setCalSupp(p => Math.max(0, p - (profile?.calSuppStep ?? 250)))} style={{ background: "#1e1e1e", border: "1px solid #333", borderRadius: 6, width: 22, height: 22, color: "#aaa", fontSize: 14, cursor: "pointer", lineHeight: 1, padding: 0 }}>−</button>
+              <span style={{ fontSize: 11, fontFamily: "monospace", color: calSupp > 0 ? "#c9a96e" : "#555", minWidth: 40, textAlign: "center", fontWeight: 700 }}>{calSupp > 0 ? `${calSupp}mg` : "OFF"}</span>
+              <button onClick={() => setCalSupp(p => Math.min(2000, p + (profile?.calSuppStep ?? 250)))} style={{ background: "#1e1e1e", border: "1px solid #333", borderRadius: 6, width: 22, height: 22, color: "#aaa", fontSize: 14, cursor: "pointer", lineHeight: 1, padding: 0 }}>+</button>
+            </div>
           </div>
         </div>
         {Object.keys(MINERAL_TARGETS).map(m => (
-          <MineralBar key={m} mineral={m} value={mineralTotals[m]} target={MINERAL_TARGETS[m]} suppActive={magSupp} potSuppActive={potSupp} arbMedication={profile?.arbMedication} />
+          <MineralBar key={m} mineral={m} value={mineralTotals[m]} target={MINERAL_TARGETS[m]} suppActive={magSupp} potSuppActive={potSupp} calSuppActive={calSupp} arbMedication={profile?.arbMedication} />
         ))}
       </div>
 

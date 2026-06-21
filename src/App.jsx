@@ -2041,6 +2041,110 @@ function UserTracker({ userId, profile, profiles }) {
 }
 
 // ── Profile Setup Screen ─────────────────────────────────────────────────────
+
+// ── Share Profile Screen ───────────────────────────────────────────────────────
+function ShareProfile({ profileId, profileName, session, onClose }) {
+  const [email, setEmail] = useState("");
+  const [permission, setPermission] = useState("manager");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [existing, setExisting] = useState([]);
+
+  useEffect(() => {
+    // Load existing permissions for this profile
+    const load = async () => {
+      try {
+        const res = await fetch(
+          `${SUPABASE_URL}/rest/v1/profile_permissions?profile_id=eq.${profileId}&select=invited_email,permission,accepted`,
+          { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${session.accessToken}` } }
+        );
+        const data = await res.json();
+        setExisting(Array.isArray(data) ? data : []);
+      } catch {}
+    };
+    load();
+  }, [profileId, session]);
+
+  const invite = async () => {
+    if (!email.trim()) return;
+    setLoading(true); setError(""); setSuccess("");
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/profile_permissions`, {
+        method: "POST",
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${session.accessToken}`,
+          "Content-Type": "application/json",
+          "Prefer": "return=minimal"
+        },
+        body: JSON.stringify({ profile_id: profileId, invited_email: email.trim().toLowerCase(), permission, accepted: true })
+      });
+      if (res.ok) {
+        setSuccess(`Invited ${email} as ${permission}`);
+        setEmail("");
+        setExisting(prev => [...prev, { invited_email: email.trim().toLowerCase(), permission, accepted: true }]);
+      } else {
+        setError("Failed to send invite — check the email address");
+      }
+    } catch { setError("Network error"); }
+    setLoading(false);
+  };
+
+  const s = {
+    container: { padding: 20 },
+    label: { fontSize: 11, color: "#888", marginBottom: 4, display: "block" },
+    input: { width: "100%", background: "#111", border: "1px solid #333", borderRadius: 10, padding: "10px 14px", color: "#e0e0e0", fontSize: 14, marginBottom: 10, boxSizing: "border-box" },
+    select: { width: "100%", background: "#111", border: "1px solid #333", borderRadius: 10, padding: "10px 14px", color: "#e0e0e0", fontSize: 14, marginBottom: 10, boxSizing: "border-box" },
+    btn: { width: "100%", background: "#c9a96e", border: "none", borderRadius: 10, padding: "12px 0", color: "#111", fontSize: 14, fontWeight: 700, cursor: "pointer" },
+    card: { background: "#1a1a1a", borderRadius: 10, padding: "10px 14px", marginBottom: 8, border: "1px solid #2a2a2a" },
+  };
+
+  return (
+    <div style={s.container}>
+      <div style={{ fontSize: 14, color: "#888", marginBottom: 20 }}>
+        Share <strong style={{ color: "#c9a96e" }}>{profileName}</strong> with others so they can view or manage this profile.
+      </div>
+
+      <label style={s.label}>Email address</label>
+      <input style={s.input} type="email" placeholder="their@email.com" value={email} onChange={e => setEmail(e.target.value)} />
+
+      <label style={s.label}>Permission level</label>
+      <select style={s.select} value={permission} onChange={e => setPermission(e.target.value)}>
+        <option value="manager">Manager — can view and edit</option>
+        <option value="viewer">Viewer — can view only</option>
+      </select>
+
+      {error && <div style={{ color: "#ff6b6b", fontSize: 12, marginBottom: 10 }}>{error}</div>}
+      {success && <div style={{ color: "#7ec8a4", fontSize: 12, marginBottom: 10 }}>{success}</div>}
+
+      <button style={{ ...s.btn, opacity: loading ? 0.6 : 1, marginBottom: 24 }} onClick={invite} disabled={loading}>
+        {loading ? "Sending..." : "Share Profile"}
+      </button>
+
+      {existing.length > 0 && (
+        <>
+          <div style={{ fontSize: 11, color: "#555", letterSpacing: 1, textTransform: "uppercase", marginBottom: 10 }}>Shared with</div>
+          {existing.map((p, i) => (
+            <div key={i} style={s.card}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ fontSize: 13, color: "#e0e0e0" }}>{p.invited_email}</div>
+                  <div style={{ fontSize: 11, color: "#888", marginTop: 2, textTransform: "capitalize" }}>{p.permission} · {p.accepted ? "Active" : "Pending"}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+
+      <button onClick={onClose} style={{ width: "100%", background: "none", border: "1px solid #333", borderRadius: 10, padding: "10px 0", color: "#888", fontSize: 13, cursor: "pointer", marginTop: 10 }}>
+        Done
+      </button>
+    </div>
+  );
+}
+
 function ProfileSetup({ profile, onSave, onCancel, isNew }) {
   const [form, setForm] = useState(profile || {
     id: "p_" + Date.now(),
@@ -2407,6 +2511,30 @@ export default function KetoTracker() {
   const [profiles, setProfiles] = useState([]);
   const [activeUser, setActiveUser] = useState("me");
   const [showSetup, setShowSetup] = useState(null); // null | "new" | profileId
+  const [showShare, setShowShare] = useState(null); // profileId to share
+  const [pendingInvites, setPendingInvites] = useState([]);
+  const [showInvites, setShowInvites] = useState(false);
+
+  // Check for pending invites when session starts
+  useEffect(() => {
+    if (!session) return;
+    const checkInvites = async () => {
+      try {
+        const user = await getUser(session.accessToken);
+        if (!user?.email) return;
+        const res = await fetch(
+          `${SUPABASE_URL}/rest/v1/profile_permissions?invited_email=eq.${encodeURIComponent(user.email.toLowerCase())}&accepted=eq.false&select=id,profile_id,permission`,
+          { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${session.accessToken}` } }
+        );
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setPendingInvites(data);
+          setShowInvites(true);
+        }
+      } catch {}
+    };
+    checkInvites();
+  }, [session]);
 
   // Load profiles — localStorage first, then sync from Supabase
   useEffect(() => {
@@ -2458,6 +2586,70 @@ export default function KetoTracker() {
 
   const activeProfile = profiles.find(p => p.id === activeUser) || profiles[0];
 
+  if (showInvites && pendingInvites.length > 0) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#111", color: "#f0ede8", fontFamily: "system-ui, sans-serif", maxWidth: 420, margin: "0 auto" }}>
+        <div style={{ background: "linear-gradient(135deg, #1a1a1a 0%, #141414 100%)", borderBottom: "1px solid #2a2a2a", padding: "20px 20px 16px" }}>
+          <div style={{ fontSize: 18, fontWeight: 800, color: "#f0ede8" }}>Profile Invitations</div>
+          <div style={{ fontSize: 12, color: "#888", marginTop: 4 }}>Someone has shared their profile with you</div>
+        </div>
+        <div style={{ padding: 20 }}>
+          {pendingInvites.map((invite, i) => (
+            <div key={i} style={{ background: "#1a1a1a", borderRadius: 12, padding: 16, marginBottom: 12, border: "1px solid #2a2a2a" }}>
+              <div style={{ fontSize: 14, color: "#c9a96e", fontWeight: 700, marginBottom: 4 }}>Profile Invitation</div>
+              <div style={{ fontSize: 12, color: "#888", marginBottom: 12 }}>
+                You've been invited as a <strong style={{ color: "#e0e0e0", textTransform: "capitalize" }}>{invite.permission}</strong> — you can {invite.permission === "viewer" ? "view" : "view and edit"} this person's nutrition log.
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={async () => {
+                  try {
+                    await fetch(`${SUPABASE_URL}/rest/v1/profile_permissions?id=eq.${invite.id}`, {
+                      method: "PATCH",
+                      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${session.accessToken}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
+                      body: JSON.stringify({ accepted: true })
+                    });
+                    setPendingInvites(prev => prev.filter(p => p.id !== invite.id));
+                    if (pendingInvites.length <= 1) setShowInvites(false);
+                  } catch {}
+                }} style={{ flex: 1, background: "#c9a96e", border: "none", borderRadius: 8, padding: "10px 0", color: "#111", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+                  ✓ Accept
+                </button>
+                <button onClick={async () => {
+                  try {
+                    await fetch(`${SUPABASE_URL}/rest/v1/profile_permissions?id=eq.${invite.id}`, {
+                      method: "DELETE",
+                      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${session.accessToken}` }
+                    });
+                    setPendingInvites(prev => prev.filter(p => p.id !== invite.id));
+                    if (pendingInvites.length <= 1) setShowInvites(false);
+                  } catch {}
+                }} style={{ flex: 1, background: "none", border: "1px solid #333", borderRadius: 8, padding: "10px 0", color: "#888", fontSize: 13, cursor: "pointer" }}>
+                  Decline
+                </button>
+              </div>
+            </div>
+          ))}
+          <button onClick={() => setShowInvites(false)} style={{ width: "100%", background: "none", border: "1px solid #333", borderRadius: 10, padding: "10px 0", color: "#888", fontSize: 13, cursor: "pointer", marginTop: 8 }}>
+            Skip for now
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (showShare) {
+    const sharingProfile = profiles.find(p => p.id === showShare);
+    return (
+      <div style={{ minHeight: "100vh", background: "#111", color: "#f0ede8", fontFamily: "system-ui, sans-serif", maxWidth: 420, margin: "0 auto" }}>
+        <div style={{ background: "linear-gradient(135deg, #1a1a1a 0%, #141414 100%)", borderBottom: "1px solid #2a2a2a", padding: "20px 20px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ fontSize: 18, fontWeight: 800, color: "#f0ede8" }}>Share Profile</div>
+          <button onClick={() => setShowShare(null)} style={{ background: "none", border: "none", color: "#888", fontSize: 20, cursor: "pointer" }}>×</button>
+        </div>
+        <ShareProfile profileId={showShare} profileName={sharingProfile?.name || "Profile"} session={session} onClose={() => setShowShare(null)} />
+      </div>
+    );
+  }
+
   if (showSetup) {
     const editingProfile = showSetup === "new" ? null : profiles.find(p => p.id === showSetup);
     return (
@@ -2466,12 +2658,18 @@ export default function KetoTracker() {
           <div style={{ fontSize: 18, fontWeight: 800, color: "#f0ede8" }}>
             {showSetup === "new" ? "New Profile" : "Edit Profile"}
           </div>
-          {showSetup !== "new" && profiles.length > 1 && (
-            <button onClick={() => { if (confirm("Delete this profile?")) handleDeleteProfile(showSetup); }}
-              style={{ background: "none", border: "1px solid #4a1a1a", borderRadius: 8, padding: "6px 12px", color: "#ff6b6b", fontSize: 12, cursor: "pointer" }}>
-              🗑 Delete
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={() => { setShowSetup(null); setShowShare(showSetup); }}
+              style={{ background: "none", border: "1px solid #2a3a2a", borderRadius: 8, padding: "6px 12px", color: "#7ec8a4", fontSize: 12, cursor: "pointer" }}>
+              👥 Share
             </button>
-          )}
+            {showSetup !== "new" && profiles.length > 1 && (
+              <button onClick={() => { if (confirm("Delete this profile?")) handleDeleteProfile(showSetup); }}
+                style={{ background: "none", border: "1px solid #4a1a1a", borderRadius: 8, padding: "6px 12px", color: "#ff6b6b", fontSize: 12, cursor: "pointer" }}>
+                🗑 Delete
+              </button>
+            )}
+          </div>
         </div>
         <ProfileSetup
           profile={editingProfile}

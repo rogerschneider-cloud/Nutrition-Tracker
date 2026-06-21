@@ -1,4 +1,3 @@
-// v5.1
 import { useState, useEffect, useRef } from "react";
 
 // ── Diet presets ─────────────────────────────────────────────────────────────
@@ -728,7 +727,7 @@ function UserTracker({ userId, profile, profiles }) {
   }, [userId]);
 
   const [dataLoaded, setDataLoaded] = useState(false);
-  const dataLoadedRef = React.useRef(false);
+  const dataLoadedRef = useRef(false);
   useEffect(() => {
     if (!dataLoadedRef.current) return;
     lsSet("entries_" + todayKey(), userId, entries);

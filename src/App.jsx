@@ -174,7 +174,145 @@ const sbSet = async (userKey, val) => {
   } catch {}
 };
 
-// Write-through cache: localStorage for speed, Supabase for persistence
+// ── Supabase Auth helpers ─────────────────────────────────────────────────────
+const authHeaders = (token) => ({
+  "apikey": SUPABASE_ANON_KEY,
+  "Authorization": `Bearer ${token}`,
+  "Content-Type": "application/json",
+});
+
+const signUp = async (email, password) => {
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+    method: "POST",
+    headers: { "apikey": SUPABASE_ANON_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  return res.json();
+};
+
+const signIn = async (email, password) => {
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+    method: "POST",
+    headers: { "apikey": SUPABASE_ANON_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  return res.json();
+};
+
+const signOut = async (token) => {
+  await fetch(`${SUPABASE_URL}/auth/v1/logout`, {
+    method: "POST",
+    headers: authHeaders(token),
+  });
+};
+
+const getUser = async (token) => {
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+    headers: authHeaders(token),
+  });
+  return res.json();
+};
+
+const refreshSession = async (refreshToken) => {
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+    method: "POST",
+    headers: { "apikey": SUPABASE_ANON_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  });
+  return res.json();
+};
+
+// ── Supabase DB helpers (authenticated) ───────────────────────────────────────
+const dbGet = async (token, profileId, dataKey) => {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/tracker_entries?profile_id=eq.${profileId}&data_key=eq.${encodeURIComponent(dataKey)}&select=value`,
+      { headers: authHeaders(token) }
+    );
+    const data = await res.json();
+    return data?.[0] ? JSON.parse(data[0].value) : null;
+  } catch { return null; }
+};
+
+const dbSet = async (token, profileId, dataKey, val) => {
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/tracker_entries?on_conflict=profile_id,data_key`, {
+      method: "POST",
+      headers: { ...authHeaders(token), "Prefer": "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify({ profile_id: profileId, data_key: dataKey, value: JSON.stringify(val), updated_at: new Date().toISOString() }),
+    });
+  } catch {}
+};
+
+const dbGetProfiles = async (token) => {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=*`, { headers: authHeaders(token) });
+    return await res.json();
+  } catch { return []; }
+};
+
+const dbCreateProfile = async (token, profile) => {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
+      method: "POST",
+      headers: { ...authHeaders(token), "Prefer": "return=representation" },
+      body: JSON.stringify(profile),
+    });
+    const data = await res.json();
+    return data?.[0] || null;
+  } catch { return null; }
+};
+
+const dbUpdateProfile = async (token, profileId, updates) => {
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${profileId}`, {
+      method: "PATCH",
+      headers: { ...authHeaders(token), "Prefer": "return=minimal" },
+      body: JSON.stringify({ ...updates, updated_at: new Date().toISOString() }),
+    });
+  } catch {}
+};
+
+const dbGetSharedFoods = async (token) => {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/shared_foods?select=foods,seed_version`, { headers: authHeaders(token) });
+    const data = await res.json();
+    return data?.[0] || null;
+  } catch { return null; }
+};
+
+const dbSetSharedFoods = async (token, ownerId, foods, seedVersion) => {
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/shared_foods?on_conflict=owner_id`, {
+      method: "POST",
+      headers: { ...authHeaders(token), "Prefer": "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify({ owner_id: ownerId, foods, seed_version: seedVersion, updated_at: new Date().toISOString() }),
+    });
+  } catch {}
+};
+
+const dbGetPermissions = async (token) => {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/profile_permissions?user_id=eq=${encodeURIComponent('auth.uid()')}&accepted=eq.true&select=profile_id,permission`,
+      { headers: authHeaders(token) }
+    );
+    return await res.json();
+  } catch { return []; }
+};
+
+const dbInvite = async (token, profileId, email, permission) => {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/profile_permissions`, {
+      method: "POST",
+      headers: { ...authHeaders(token), "Prefer": "return=representation" },
+      body: JSON.stringify({ profile_id: profileId, invited_email: email, permission, accepted: false }),
+    });
+    return await res.json();
+  } catch { return null; }
+};
+
+// ── Write-through cache: localStorage for speed, Supabase for persistence
 const lsGet = (key, uid) => { try { const v = localStorage.getItem(`keto_${uid}_${key}`); return v ? JSON.parse(v) : null; } catch { return null; } };
 const lsSet = (key, uid, val) => {
   try { localStorage.setItem(`keto_${uid}_${key}`, JSON.stringify(val)); } catch {}
@@ -2163,7 +2301,101 @@ function ProfileSetup({ profile, onSave, onCancel, isNew }) {
 }
 
 // ── Root with flexible profiles ───────────────────────────────────────────────
+
+// ── Login Screen ──────────────────────────────────────────────────────────────
+function LoginScreen({ onAuth }) {
+  const [mode, setMode] = useState("signin");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  const ls = {
+    container: { minHeight: "100vh", background: "#111", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 },
+    card: { background: "#1a1a1a", borderRadius: 16, padding: 32, width: "100%", maxWidth: 360, border: "1px solid #2a2a2a" },
+    title: { fontSize: 24, fontWeight: 800, color: "#c9a96e", marginBottom: 6, textAlign: "center" },
+    sub: { fontSize: 12, color: "#555", textAlign: "center", marginBottom: 28 },
+    inp: { width: "100%", background: "#111", border: "1px solid #333", borderRadius: 10, padding: "12px 14px", color: "#e0e0e0", fontSize: 14, marginBottom: 12, boxSizing: "border-box" },
+    btn: { width: "100%", background: "#c9a96e", border: "none", borderRadius: 10, padding: "13px 0", color: "#111", fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 16 },
+    toggle: { textAlign: "center", fontSize: 13, color: "#555" },
+    link: { color: "#c9a96e", cursor: "pointer", textDecoration: "underline" },
+    err: { color: "#ff6b6b", fontSize: 12, marginBottom: 12, textAlign: "center" },
+    suc: { color: "#7ec8a4", fontSize: 12, marginBottom: 12, textAlign: "center" },
+  };
+
+  const handle = async () => {
+    setLoading(true); setError(""); setSuccess("");
+    try {
+      if (mode === "signup") {
+        const res = await signUp(email, password);
+        if (res.error) { setError(res.error.message || "Sign up failed"); }
+        else { setSuccess("Check your email to confirm your account, then sign in."); setMode("signin"); }
+      } else {
+        const res = await signIn(email, password);
+        if (res.error) { setError(res.error.message || "Sign in failed"); }
+        else {
+          localStorage.setItem("nt_access_token", res.access_token);
+          localStorage.setItem("nt_refresh_token", res.refresh_token);
+          onAuth({ accessToken: res.access_token, refreshToken: res.refresh_token, user: res.user });
+        }
+      }
+    } catch { setError("Network error - please try again."); }
+    setLoading(false);
+  };
+
+  return (
+    <div style={ls.container}>
+      <div style={ls.card}>
+        <div style={ls.title}>Nutrition Tracker</div>
+        <div style={ls.sub}>{mode === "signin" ? "Sign in to your account" : "Create a new account"}</div>
+        <input style={ls.inp} type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" />
+        <input style={ls.inp} type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)}
+          autoComplete={mode === "signup" ? "new-password" : "current-password"}
+          onKeyDown={e => e.key === "Enter" && handle()} />
+        {error && <div style={ls.err}>{error}</div>}
+        {success && <div style={ls.suc}>{success}</div>}
+        <button style={{ ...ls.btn, opacity: loading ? 0.6 : 1 }} onClick={handle} disabled={loading}>
+          {loading ? "Please wait..." : mode === "signin" ? "Sign In" : "Create Account"}
+        </button>
+        <div style={ls.toggle}>
+          {mode === "signin"
+            ? <span>No account? <span style={ls.link} onClick={() => { setMode("signup"); setError(""); }}>Sign up</span></span>
+            : <span>Have an account? <span style={ls.link} onClick={() => { setMode("signin"); setError(""); }}>Sign in</span></span>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function KetoTracker() {
+  const [session, setSession] = useState(() => {
+    const token = localStorage.getItem("nt_access_token");
+    const refresh = localStorage.getItem("nt_refresh_token");
+    return token ? { accessToken: token, refreshToken: refresh } : null;
+  });
+
+  // Try to refresh session on load if we have a refresh token
+  useEffect(() => {
+    const refresh = localStorage.getItem("nt_refresh_token");
+    if (!session && refresh) {
+      refreshSession(refresh).then(res => {
+        if (res.access_token) {
+          localStorage.setItem("nt_access_token", res.access_token);
+          localStorage.setItem("nt_refresh_token", res.refresh_token);
+          setSession({ accessToken: res.access_token, refreshToken: res.refresh_token, user: res.user });
+        }
+      });
+    }
+  }, []);
+
+  const handleSignOut = async () => {
+    if (session) await signOut(session.accessToken);
+    localStorage.removeItem("nt_access_token");
+    localStorage.removeItem("nt_refresh_token");
+    setSession(null);
+  };
+
   const [profiles, setProfiles] = useState([]);
   const [activeUser, setActiveUser] = useState("me");
   const [showSetup, setShowSetup] = useState(null); // null | "new" | profileId
@@ -2243,6 +2475,8 @@ export default function KetoTracker() {
     );
   }
 
+  if (!session) return <LoginScreen onAuth={setSession} />;
+
   return (
     <div style={{ minHeight: "100vh", background: "#111", color: "#f0ede8", fontFamily: "system-ui, sans-serif", maxWidth: 420, margin: "0 auto", paddingBottom: 80 }}>
       {/* Header */}
@@ -2252,10 +2486,16 @@ export default function KetoTracker() {
             <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.5, color: "#f0ede8" }}>Nutrition Tracker</div>
             <div style={{ fontSize: 12, color: "#c9a96e", letterSpacing: 2, textTransform: "uppercase", marginTop: 2, marginBottom: 14 }}>🏔 Mediterranean · Glycemic Load</div>
           </div>
-          <button onClick={() => setShowSetup(activeUser)}
-            style={{ background: "none", border: "1px solid #333", borderRadius: 8, padding: "6px 10px", color: "#888", fontSize: 11, cursor: "pointer", marginTop: 4 }}>
-            ⚙️ Edit
-          </button>
+          <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
+            <button onClick={() => setShowSetup(activeUser)}
+              style={{ background: "none", border: "1px solid #333", borderRadius: 8, padding: "6px 10px", color: "#888", fontSize: 11, cursor: "pointer" }}>
+              ⚙️ Edit
+            </button>
+            <button onClick={handleSignOut}
+              style={{ background: "none", border: "1px solid #333", borderRadius: 8, padding: "6px 10px", color: "#666", fontSize: 11, cursor: "pointer" }}>
+              Sign Out
+            </button>
+          </div>
         </div>
 
         {/* Profile switcher — scrollable */}

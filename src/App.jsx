@@ -288,16 +288,28 @@ const SEEDED_MY_FOODS = [
   { id: "mf_ricotta_homemade", name: "Homemade Ricotta from 3% Milk (per 100g)", calories: 174, fat: 10, protein: 11, carbs: 7, fiber: 0, sodium: 45, calcium: 207, magnesium: 0, potassium: 0, _unit: "g" },
   { id: "mf_sour_cream_full_fat", name: "Sour Cream Full Fat - Tnuva (per 100g)", calories: 265, fat: 27, protein: 2.4, carbs: 3, fiber: 0, sodium: 45, calcium: 0, magnesium: 0, potassium: 0, _unit: "g" },
 ];
+const SEED_VERSION = 6; // increment when SEEDED_MY_FOODS changes
 try {
   const raw = localStorage.getItem("keto_shared_my_foods");
   const existing = raw ? JSON.parse(raw) : [];
+  const storedVersion = parseInt(localStorage.getItem("keto_seed_version") || "0");
   const seedMap = Object.fromEntries(SEEDED_MY_FOODS.map(f => [f.id, f]));
-  // Patch existing foods missing _unit by restoring it from seed data
-  const patched = existing.map(f => (seedMap[f.id] && !f._unit) ? { ...seedMap[f.id], ...f, _unit: seedMap[f.id]._unit } : f);
-  const existingIds = new Set(patched.map(f => f.id));
-  const toAdd = SEEDED_MY_FOODS.filter(f => !existingIds.has(f.id));
-  if (toAdd.length > 0 || patched.some((f, i) => f !== existing[i])) {
-    localStorage.setItem("keto_shared_my_foods", JSON.stringify([...toAdd, ...patched]));
+
+  if (storedVersion < SEED_VERSION) {
+    // Full reseed: replace all seeded foods with latest values, keep user-added foods (no mf_ prefix or unknown id)
+    const userAdded = existing.filter(f => !seedMap[f.id]);
+    const merged = [...SEEDED_MY_FOODS, ...userAdded];
+    localStorage.setItem("keto_shared_my_foods", JSON.stringify(merged));
+    localStorage.setItem("keto_seed_version", String(SEED_VERSION));
+    sbSet("keto_shared_my_foods", merged);
+  } else {
+    // Just add missing and patch _unit
+    const patched = existing.map(f => (seedMap[f.id] && !f._unit) ? { ...seedMap[f.id], ...f, _unit: seedMap[f.id]._unit } : f);
+    const existingIds = new Set(patched.map(f => f.id));
+    const toAdd = SEEDED_MY_FOODS.filter(f => !existingIds.has(f.id));
+    if (toAdd.length > 0 || patched.some((f, i) => f !== existing[i])) {
+      localStorage.setItem("keto_shared_my_foods", JSON.stringify([...toAdd, ...patched]));
+    }
   }
 } catch {}
 

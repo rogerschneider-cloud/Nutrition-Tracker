@@ -947,12 +947,23 @@ function UserTracker({ userId, profile, profiles }) {
 
   const handleImageFile = (file) => {
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const base64 = e.target.result.split(",")[1];
-      setAnalyzeImage({ base64, mediaType: file.type || "image/jpeg", preview: e.target.result });
+    const canvas = document.createElement("canvas");
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      // Resize to max 800px on longest side
+      const MAX = 800;
+      let { width, height } = img;
+      if (width > height && width > MAX) { height = Math.round(height * MAX / width); width = MAX; }
+      else if (height > width && height > MAX) { width = Math.round(width * MAX / height); height = MAX; }
+      else if (width > MAX) { height = Math.round(height * MAX / width); width = MAX; }
+      canvas.width = width; canvas.height = height;
+      canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+      URL.revokeObjectURL(objectUrl);
+      setAnalyzeImage({ base64: dataUrl.split(",")[1], mediaType: "image/jpeg", preview: dataUrl });
     };
-    reader.readAsDataURL(file);
+    img.src = objectUrl;
   };
 
   const runAnalysis = async () => {
@@ -1411,7 +1422,7 @@ function UserTracker({ userId, profile, profiles }) {
                     <label style={{ display: "flex", alignItems: "center", gap: 8, background: "#1a1a1a", border: "1px dashed #333", borderRadius: 10, padding: "10px 14px", cursor: "pointer" }}>
                       <span style={{ fontSize: 20 }}>📷</span>
                       <span style={{ fontSize: 12, color: "#888" }}>{analyzeImage ? "Photo ready — tap to change" : "Tap to add a photo (optional)"}</span>
-                      <input type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={e => handleImageFile(e.target.files[0])} />
+                      <input type="file" accept="image/*" style={{ display: "none" }} onChange={e => handleImageFile(e.target.files[0])} />
                     </label>
                     {analyzeImage && (
                       <div style={{ marginTop: 6, position: "relative", display: "inline-block" }}>

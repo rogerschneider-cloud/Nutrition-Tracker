@@ -314,9 +314,14 @@ const dbInvite = async (token, profileId, email, permission) => {
 
 // ── Write-through cache: localStorage for speed, Supabase for persistence
 const lsGet = (key, uid) => { try { const v = localStorage.getItem(`keto_${uid}_${key}`); return v ? JSON.parse(v) : null; } catch { return null; } };
-const lsSet = (key, uid, val) => {
+// lsSet is now a factory that takes an optional token+profileId for authenticated writes
+const lsSet = (key, uid, val, token, profileId) => {
   try { localStorage.setItem(`keto_${uid}_${key}`, JSON.stringify(val)); } catch {}
-  sbSet(`keto_${uid}_${key}`, val);
+  if (token && profileId) {
+    dbSet(token, profileId, key, val);
+  } else {
+    sbSet(`keto_${uid}_${key}`, val);
+  }
 };
 
 // Load from Supabase and sync to localStorage
@@ -835,19 +840,21 @@ function UserTracker({ userId, profile, profiles }) {
   // Load on userId change — Supabase first, localStorage as fallback
   useEffect(() => {
     (async () => {
-      // Try Supabase first
+      // Use authenticated dbGet with real profile UUID
+      const token = session?.accessToken;
+      const pid = userId; // now a real UUID from Supabase profiles table
       const [hist, bl, eo, sl, od, rh, ms2, ps2, cs2, mf2, todayEntries] = await Promise.all([
-        syncFromCloud("history", userId),
-        syncFromCloud("burn_log", userId),
-        syncFromCloud("eaten_override", userId),
-        syncFromCloud("supp_log", userId),
-        syncFromCloud("off_days", userId),
-        syncFromCloud("readings_history", userId),
-        syncFromCloud("mag_supp", userId),
-        syncFromCloud("pot_supp", userId),
-        syncFromCloud("cal_supp", userId),
+        token && pid ? dbGet(token, pid, "history") : syncFromCloud("history", userId),
+        token && pid ? dbGet(token, pid, "burn_log") : syncFromCloud("burn_log", userId),
+        token && pid ? dbGet(token, pid, "eaten_override") : syncFromCloud("eaten_override", userId),
+        token && pid ? dbGet(token, pid, "supp_log") : syncFromCloud("supp_log", userId),
+        token && pid ? dbGet(token, pid, "off_days") : syncFromCloud("off_days", userId),
+        token && pid ? dbGet(token, pid, "readings_history") : syncFromCloud("readings_history", userId),
+        token && pid ? dbGet(token, pid, "mag_supp") : syncFromCloud("mag_supp", userId),
+        token && pid ? dbGet(token, pid, "pot_supp") : syncFromCloud("pot_supp", userId),
+        token && pid ? dbGet(token, pid, "cal_supp") : syncFromCloud("cal_supp", userId),
         sbGet("keto_shared_my_foods"),
-        syncFromCloud("entries_" + todayKey(), userId),
+        token && pid ? dbGet(token, pid, "entries_" + todayKey()) : syncFromCloud("entries_" + todayKey(), userId),
       ]);
 
       // Set from cloud or fall back to localStorage
@@ -889,47 +896,47 @@ function UserTracker({ userId, profile, profiles }) {
   const dataLoadedRef = useRef(false);
   useEffect(() => {
     if (!dataLoadedRef.current) return;
-    lsSet("entries_" + todayKey(), userId, entries);
+    lsSet("entries_" + todayKey(), userId, entries, session?.accessToken, userId);
     setHistory(prev => {
       const hist = { ...prev, [todayKey()]: entries };
-      lsSet("history", userId, hist);
+      lsSet("history", userId, hist, session?.accessToken, userId);
       return hist;
     });
   }, [entries, userId]);
 
-  useEffect(() => { lsSet("burn_log", userId, burnLog); }, [burnLog, userId]);
-  useEffect(() => { lsSet("eaten_override", userId, eatenOverride); }, [eatenOverride, userId]);
+  useEffect(() => { lsSet("burn_log", userId, burnLog, session?.accessToken, userId); }, [burnLog, userId, session]);
+  useEffect(() => { lsSet("eaten_override", userId, eatenOverride, session?.accessToken, userId); }, [eatenOverride, userId, session]);
   useEffect(() => {
-    lsSet("mag_supp", userId, magSupp);
+    lsSet("mag_supp", userId, magSupp, session?.accessToken, userId);
     // Read potSupp from storage to avoid stale closure
     setSuppLog(prev => {
       const savedPot = lsGet("pot_supp", userId);
       const currentPot = savedPot !== null ? Math.max(0, Number(savedPot)) : 0;
       const updated = { ...prev, [todayKey()]: { mag: magSupp, pot: currentPot } };
-      lsSet("supp_log", userId, updated);
+      lsSet("supp_log", userId, updated, session?.accessToken, userId);
       return updated;
     });
   }, [magSupp, userId]);
   useEffect(() => {
-    lsSet("cal_supp", userId, calSupp);
+    lsSet("cal_supp", userId, calSupp, session?.accessToken, userId);
     sbSet(`keto_${userId}_cal_supp`, calSupp);
   }, [calSupp, userId]);
   useEffect(() => {
-    lsSet("pot_supp", userId, potSupp);
+    lsSet("pot_supp", userId, potSupp, session?.accessToken, userId);
     // Read magSupp from storage to avoid stale closure
     setSuppLog(prev => {
       const savedMag = lsGet("mag_supp", userId);
       const currentMag = savedMag !== null ? Number(savedMag) : 0;
       const updated = { ...prev, [todayKey()]: { mag: currentMag, pot: potSupp } };
-      lsSet("supp_log", userId, updated);
+      lsSet("supp_log", userId, updated, session?.accessToken, userId);
       return updated;
     });
   }, [potSupp, userId]);
-  useEffect(() => { lsSet("off_days", userId, offDays); }, [offDays, userId]);
+  useEffect(() => { lsSet("off_days", userId, offDays, session?.accessToken, userId); }, [offDays, userId, session]);
   useEffect(() => {
     const rh = lsGet("readings_history", userId) || {};
     rh[todayKey()] = readings;
-    lsSet("readings_history", userId, rh);
+    lsSet("readings_history", userId, rh, session?.accessToken, userId);
     setReadingsHistory(rh);
   }, [readings, userId]);
   // My Foods saved to shared key so both profiles see the same list
@@ -2536,48 +2543,125 @@ export default function KetoTracker() {
     checkInvites();
   }, [session]);
 
-  // Load profiles — localStorage first, then sync from Supabase
+  // Load profiles from Supabase — create defaults if none exist
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("keto_profiles");
-      if (saved) {
-        setProfiles(JSON.parse(saved));
-      } else {
-        setProfiles(DEFAULT_PROFILES);
-        localStorage.setItem("keto_profiles", JSON.stringify(DEFAULT_PROFILES));
-        sbSet("keto_profiles", DEFAULT_PROFILES);
-      }
-    } catch { setProfiles(DEFAULT_PROFILES); }
-    // Sync from cloud
+    if (!session) return;
     (async () => {
-      const val = await sbGet("keto_profiles");
-      if (val !== null) {
-        try { localStorage.setItem("keto_profiles", JSON.stringify(val)); } catch {}
-        setProfiles(val);
+      try {
+        // Load from Supabase profiles table
+        let dbProfiles = await dbGetProfiles(session.accessToken);
+        if (!Array.isArray(dbProfiles)) dbProfiles = [];
+
+        if (dbProfiles.length === 0) {
+          // First time — create default profiles in Supabase
+          const user = await getUser(session.accessToken);
+          const defaults = DEFAULT_PROFILES.map(p => ({
+            owner_id: user.id,
+            name: p.name === "Me" ? (user.email?.split("@")[0] || "Me") : p.name,
+            icon: p.icon,
+            weight: p.weight, height: p.height, age: p.age, sex: p.sex,
+            activity: p.activity, goal: p.goal, diet_type: p.dietType,
+            hypertension: p.hypertension, osteopenia: p.osteopenia,
+            arb_medication: p.arbMedication || false,
+            custom_carbs: p.customCarbs, logging_bias: p.loggingBias,
+            quick_log_bias: p.quickLogBias, glucose_unit: p.glucoseUnit,
+            default_mag_supp: p.defaultMagSupp || 0,
+            default_pot_supp: p.defaultPotSupp || 0,
+            default_cal_supp: p.defaultCalSupp || 0,
+            cal_supp_step: p.calSuppStep || 250,
+          }));
+          // Create only the first profile (self) — others can be added manually
+          const created = await dbCreateProfile(session.accessToken, defaults[0]);
+          if (created) dbProfiles = [created];
+        }
+
+        // Map DB profiles to app format
+        const mapped = dbProfiles.map(p => ({
+          id: p.id, // real UUID from Supabase
+          name: p.name, icon: p.icon,
+          weight: p.weight, height: p.height, age: p.age, sex: p.sex,
+          activity: p.activity, goal: p.goal, dietType: p.diet_type,
+          hypertension: p.hypertension, osteopenia: p.osteopenia,
+          arbMedication: p.arb_medication,
+          customCarbs: p.custom_carbs, loggingBias: p.logging_bias,
+          quickLogBias: p.quick_log_bias, glucoseUnit: p.glucose_unit,
+          defaultMagSupp: p.default_mag_supp, defaultPotSupp: p.default_pot_supp,
+          defaultCalSupp: p.default_cal_supp, calSuppStep: p.cal_supp_step,
+        }));
+
+        setProfiles(mapped);
+        setActiveUser(mapped[0].id);
+        localStorage.setItem("keto_profiles", JSON.stringify(mapped));
+      } catch (e) {
+        console.warn("Profile load failed, using localStorage:", e);
+        const saved = localStorage.getItem("keto_profiles");
+        const fallback = saved ? JSON.parse(saved) : DEFAULT_PROFILES;
+        setProfiles(fallback);
+        setActiveUser(fallback[0].id);
       }
     })();
-  }, []);
+  }, [session]);
 
   const saveProfiles = (updated) => {
     setProfiles(updated);
     localStorage.setItem("keto_profiles", JSON.stringify(updated));
-    sbSet("keto_profiles", updated);
   };
 
-  const handleSaveProfile = (form) => {
+  const handleSaveProfile = async (form) => {
     if (showSetup === "new") {
-      const updated = [...profiles, form];
-      saveProfiles(updated);
-      setActiveUser(form.id);
+      // Create new profile in Supabase
+      try {
+        const user = await getUser(session.accessToken);
+        const created = await dbCreateProfile(session.accessToken, {
+          owner_id: user.id,
+          name: form.name, icon: form.icon,
+          weight: form.weight, height: form.height, age: form.age, sex: form.sex,
+          activity: form.activity, goal: form.goal, diet_type: form.dietType,
+          hypertension: form.hypertension, osteopenia: form.osteopenia,
+          arb_medication: form.arbMedication || false,
+          custom_carbs: form.customCarbs, logging_bias: form.loggingBias,
+          quick_log_bias: form.quickLogBias, glucose_unit: form.glucoseUnit,
+          default_mag_supp: form.defaultMagSupp || 0,
+          default_cal_supp: form.defaultCalSupp || 0,
+          cal_supp_step: form.calSuppStep || 250,
+        });
+        if (created) {
+          const newProfile = { ...form, id: created.id };
+          const updated = [...profiles, newProfile];
+          saveProfiles(updated);
+          setActiveUser(created.id);
+        }
+      } catch { console.warn("Profile create failed"); }
     } else {
+      // Update existing profile in Supabase
+      try {
+        await dbUpdateProfile(session.accessToken, form.id, {
+          name: form.name, icon: form.icon,
+          weight: form.weight, height: form.height, age: form.age, sex: form.sex,
+          activity: form.activity, goal: form.goal, diet_type: form.dietType,
+          hypertension: form.hypertension, osteopenia: form.osteopenia,
+          arb_medication: form.arbMedication || false,
+          custom_carbs: form.customCarbs, logging_bias: form.loggingBias,
+          quick_log_bias: form.quickLogBias, glucose_unit: form.glucoseUnit,
+          default_mag_supp: form.defaultMagSupp || 0,
+          default_cal_supp: form.defaultCalSupp || 0,
+          cal_supp_step: form.calSuppStep || 250,
+        });
+      } catch { console.warn("Profile update failed"); }
       const updated = profiles.map(p => p.id === form.id ? form : p);
       saveProfiles(updated);
     }
     setShowSetup(null);
   };
 
-  const handleDeleteProfile = (id) => {
-    if (profiles.length <= 1) return; // keep at least one
+  const handleDeleteProfile = async (id) => {
+    if (profiles.length <= 1) return;
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${id}`, {
+        method: "DELETE",
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${session.accessToken}` }
+      });
+    } catch {}
     const updated = profiles.filter(p => p.id !== id);
     saveProfiles(updated);
     if (activeUser === id) setActiveUser(updated[0].id);

@@ -1418,15 +1418,22 @@ function UserTracker({ userId, profile, profiles }) {
             <div>
               {!analyzeResult ? (
                 <>
-                  {/* Photo upload */}
+                  {/* Photo upload — camera or gallery */}
                   <div style={{ marginBottom: 10 }}>
-                    <label style={{ display: "flex", alignItems: "center", gap: 8, background: "#1a1a1a", border: "1px dashed #333", borderRadius: 10, padding: "10px 14px", cursor: "pointer" }}>
-                      <span style={{ fontSize: 20 }}>📷</span>
-                      <span style={{ fontSize: 12, color: "#888" }}>{analyzeImage ? "Photo ready — tap to change" : "Tap to add a photo (optional)"}</span>
-                      <input type="file" accept="image/*" style={{ display: "none" }} onChange={e => handleImageFile(e.target.files[0])} />
-                    </label>
+                    <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
+                      <label style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, background: "#1a1a1a", border: "1px dashed #333", borderRadius: 10, padding: "10px 8px", cursor: "pointer" }}>
+                        <span style={{ fontSize: 18 }}>📷</span>
+                        <span style={{ fontSize: 11, color: "#888" }}>Camera</span>
+                        <input type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={e => handleImageFile(e.target.files[0])} />
+                      </label>
+                      <label style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, background: "#1a1a1a", border: "1px dashed #333", borderRadius: 10, padding: "10px 8px", cursor: "pointer" }}>
+                        <span style={{ fontSize: 18 }}>🖼️</span>
+                        <span style={{ fontSize: 11, color: "#888" }}>Gallery</span>
+                        <input type="file" accept="image/*" style={{ display: "none" }} onChange={e => handleImageFile(e.target.files[0])} />
+                      </label>
+                    </div>
                     {analyzeImage && (
-                      <div style={{ marginTop: 6, position: "relative", display: "inline-block" }}>
+                      <div style={{ position: "relative", display: "inline-block" }}>
                         <img src={analyzeImage.preview} alt="preview" style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 8 }} />
                         <button onClick={() => setAnalyzeImage(null)} style={{ position: "absolute", top: -6, right: -6, background: "#333", border: "none", borderRadius: "50%", width: 20, height: 20, color: "#fff", fontSize: 12, cursor: "pointer", lineHeight: 1 }}>×</button>
                       </div>

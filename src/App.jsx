@@ -936,15 +936,17 @@ function UserTracker({ userId, profile, profiles, session }) {
       setReadingsHistory(readHist);
       setReadings(readHist[todayKey()] || []);
 
-      const ms = ms2 ?? lsGet("mag_supp", userId);
-      const magDefault = profile?.defaultMagSupp ?? 0;
-      setMagSupp(ms !== null && ms !== undefined ? (ms === true ? 400 : ms === false ? 0 : Number(ms)) : magDefault);
-      const ps = ps2 ?? lsGet("pot_supp", userId);
-      const potDefault = profile?.defaultPotSupp ?? 0;
-      setPotSupp(ps !== null && ps !== undefined ? Math.max(0, Number(ps)) : potDefault);
-      const cs = cs2 ?? lsGet("cal_supp", userId);
-      const calDefault = profile?.defaultCalSupp ?? 0;
-      setCalSupp(cs !== null && cs !== undefined ? Math.max(0, Number(cs)) : calDefault);
+      if (!dataLoadedRef.current) {
+        const ms = ms2 ?? lsGet("mag_supp", userId);
+        const magDefault = profile?.defaultMagSupp ?? 0;
+        setMagSupp(ms !== null && ms !== undefined ? (ms === true ? 400 : ms === false ? 0 : Number(ms)) : magDefault);
+        const ps = ps2 ?? lsGet("pot_supp", userId);
+        const potDefault = profile?.defaultPotSupp ?? 0;
+        setPotSupp(ps !== null && ps !== undefined ? Math.max(0, Number(ps)) : potDefault);
+        const cs = cs2 ?? lsGet("cal_supp", userId);
+        const calDefault = profile?.defaultCalSupp ?? 0;
+        setCalSupp(cs !== null && cs !== undefined ? Math.max(0, Number(cs)) : calDefault);
+      }
 
       // Today's entries — prefer cloud, fall back to history[today], then localStorage
       const todayFromHistory = history[todayKey()] || [];

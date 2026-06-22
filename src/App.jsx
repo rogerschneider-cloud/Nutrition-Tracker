@@ -199,26 +199,6 @@ const authHeaders = (token) => ({
   "Content-Type": "application/json",
 });
 
-// Auto-refresh token if request returns 401
-const authedFetch = async (url, options = {}) => {
-  const token = localStorage.getItem("nt_access_token");
-  const res = await fetch(url, { ...options, headers: { ...authHeaders(token), ...(options.headers || {}) } });
-  if (res.status === 401) {
-    // Try to refresh
-    const refresh = localStorage.getItem("nt_refresh_token");
-    if (refresh) {
-      const refreshRes = await refreshSession(refresh);
-      if (refreshRes.access_token) {
-        localStorage.setItem("nt_access_token", refreshRes.access_token);
-        localStorage.setItem("nt_refresh_token", refreshRes.refresh_token);
-        // Retry with new token
-        return fetch(url, { ...options, headers: { ...authHeaders(refreshRes.access_token), ...(options.headers || {}) } });
-      }
-    }
-  }
-  return res;
-};
-
 const signUp = async (email, password) => {
   const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
     method: "POST",
@@ -258,6 +238,24 @@ const refreshSession = async (refreshToken) => {
     body: JSON.stringify({ refresh_token: refreshToken }),
   });
   return res.json();
+};
+
+// Auto-refresh token if request returns 401
+const authedFetch = async (url, options = {}) => {
+  const token = localStorage.getItem("nt_access_token");
+  const res = await fetch(url, { ...options, headers: { ...authHeaders(token), ...(options.headers || {}) } });
+  if (res.status === 401) {
+    const refresh = localStorage.getItem("nt_refresh_token");
+    if (refresh) {
+      const refreshRes = await refreshSession(refresh);
+      if (refreshRes.access_token) {
+        localStorage.setItem("nt_access_token", refreshRes.access_token);
+        localStorage.setItem("nt_refresh_token", refreshRes.refresh_token);
+        return fetch(url, { ...options, headers: { ...authHeaders(refreshRes.access_token), ...(options.headers || {}) } });
+      }
+    }
+  }
+  return res;
 };
 
 // ── Supabase DB helpers (authenticated) ───────────────────────────────────────

@@ -1,1 +1,1 @@
-/home/claude/fixed_content.txt
+TEST

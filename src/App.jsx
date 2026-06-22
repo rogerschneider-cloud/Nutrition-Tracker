@@ -870,6 +870,10 @@ function UserTracker({ userId, profile, profiles, session }) {
   const [magSupp, setMagSupp] = useState(profile?.defaultMagSupp ?? 0);
   const [potSupp, setPotSupp] = useState(profile?.defaultPotSupp ?? 0);
   const [calSupp, setCalSupp] = useState(profile?.defaultCalSupp ?? 0);
+
+  // Sync supplement defaults when profile settings change
+  useEffect(() => { if (profile?.defaultMagSupp !== undefined) setMagSupp(profile.defaultMagSupp); }, [profile?.defaultMagSupp]);
+  useEffect(() => { if (profile?.defaultCalSupp !== undefined) setCalSupp(profile.defaultCalSupp); }, [profile?.defaultCalSupp]);
   const [suppLog, setSuppLog] = useState({}); // { "YYYY-MM-DD": { mag: 400, pot: 0 } }
   const [myFoods, setMyFoods] = useState([]);
   const [expandedEntry, setExpandedEntry] = useState(null);

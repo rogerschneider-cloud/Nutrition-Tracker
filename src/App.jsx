@@ -2222,10 +2222,6 @@ function ProfileSetup({ profile, onSave, onCancel, isNew }) {
 
   return (
     <div style={{ padding: "16px", paddingBottom: 80 }}>
-      <div style={{ fontSize: 18, fontWeight: 800, color: "#f0ede8", marginBottom: 20 }}>
-        {isNew ? "Add Profile" : "Edit Profile"}
-      </div>
-
       {/* Icon picker */}
       <div style={s.row}>
         <div style={s.label}>Icon</div>
@@ -2847,12 +2843,7 @@ function KetoTrackerInner() {
               style={{ background: "none", border: "1px solid #2a3a2a", borderRadius: 8, padding: "6px 12px", color: "#7ec8a4", fontSize: 12, cursor: "pointer" }}>
               👥 Share
             </button>
-            {showSetup !== "new" && profiles.length > 1 && (
-              <button onClick={() => { if (confirm("Delete this profile?")) handleDeleteProfile(showSetup); }}
-                style={{ background: "none", border: "1px solid #4a1a1a", borderRadius: 8, padding: "6px 12px", color: "#ff6b6b", fontSize: 12, cursor: "pointer" }}>
-                🗑 Delete
-              </button>
-            )}
+
           </div>
         </div>
         <ProfileSetup
@@ -2896,10 +2887,7 @@ function KetoTrackerInner() {
               {p.icon} {p.name}
             </button>
           ))}
-          <button onClick={() => setShowSetup("new")}
-            style={{ padding: "10px 14px", background: "none", border: "none", borderBottom: "2px solid transparent", color: "#444", fontSize: 18, cursor: "pointer" }}>
-            +
-          </button>
+
         </div>
       </div>
 

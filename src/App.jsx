@@ -2899,7 +2899,9 @@ function KetoTrackerInner() {
 
       {/* Per-user content */}
       {activeProfile && (
-        <UserTracker key={activeUser} userId={activeUser} profile={activeProfile} profiles={profiles} session={session} />
+        {activeUser && activeUser !== "me" && activeUser !== "wife"
+          ? <UserTracker key={activeUser} userId={activeUser} profile={activeProfile} profiles={profiles} session={session} />
+          : <div style={{ padding: 40, textAlign: "center", color: "#555", fontSize: 13 }}>Loading profile...</div>}
       )}
     </div>
   );

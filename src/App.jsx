@@ -1,1 +1,1 @@
-/home/claude/App.jsx
+import { useState, useEffect, useRef, Component } from "react";

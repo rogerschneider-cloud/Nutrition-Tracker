@@ -199,6 +199,26 @@ const authHeaders = (token) => ({
   "Content-Type": "application/json",
 });
 
+// Auto-refresh token if request returns 401
+const authedFetch = async (url, options = {}) => {
+  const token = localStorage.getItem("nt_access_token");
+  const res = await fetch(url, { ...options, headers: { ...authHeaders(token), ...(options.headers || {}) } });
+  if (res.status === 401) {
+    // Try to refresh
+    const refresh = localStorage.getItem("nt_refresh_token");
+    if (refresh) {
+      const refreshRes = await refreshSession(refresh);
+      if (refreshRes.access_token) {
+        localStorage.setItem("nt_access_token", refreshRes.access_token);
+        localStorage.setItem("nt_refresh_token", refreshRes.refresh_token);
+        // Retry with new token
+        return fetch(url, { ...options, headers: { ...authHeaders(refreshRes.access_token), ...(options.headers || {}) } });
+      }
+    }
+  }
+  return res;
+};
+
 const signUp = async (email, password) => {
   const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
     method: "POST",
@@ -243,9 +263,8 @@ const refreshSession = async (refreshToken) => {
 // ── Supabase DB helpers (authenticated) ───────────────────────────────────────
 const dbGet = async (token, profileId, dataKey) => {
   try {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/tracker_entries?profile_id=eq.${profileId}&data_key=eq.${encodeURIComponent(dataKey)}&select=value`,
-      { headers: authHeaders(token) }
+    const res = await authedFetch(
+      `${SUPABASE_URL}/rest/v1/tracker_entries?profile_id=eq.${profileId}&data_key=eq.${encodeURIComponent(dataKey)}&select=value`
     );
     const data = await res.json();
     return data?.[0] ? JSON.parse(data[0].value) : null;
@@ -254,9 +273,9 @@ const dbGet = async (token, profileId, dataKey) => {
 
 const dbSet = async (token, profileId, dataKey, val) => {
   try {
-    await fetch(`${SUPABASE_URL}/rest/v1/tracker_entries?on_conflict=profile_id,data_key`, {
+    await authedFetch(`${SUPABASE_URL}/rest/v1/tracker_entries?on_conflict=profile_id,data_key`, {
       method: "POST",
-      headers: { ...authHeaders(token), "Prefer": "resolution=merge-duplicates,return=minimal" },
+      headers: { "Prefer": "resolution=merge-duplicates,return=minimal" },
       body: JSON.stringify({ profile_id: profileId, data_key: dataKey, value: JSON.stringify(val), updated_at: new Date().toISOString() }),
     });
   } catch {}
@@ -850,9 +869,9 @@ function UserTracker({ userId, profile, profiles, session }) {
   const [eatenOverride, setEatenOverride] = useState({});
   const [eatenEditDay, setEatenEditDay] = useState("");
   const [suppEditDay, setSuppEditDay] = useState("");
-  const [magSupp, setMagSupp] = useState(400); // mg of magnesium supplement
-  const [potSupp, setPotSupp] = useState(0); // mg of potassium supplement (cream of tartar)
-  const [calSupp, setCalSupp] = useState(0); // mg of calcium supplement
+  const [magSupp, setMagSupp] = useState(profile?.defaultMagSupp ?? 0);
+  const [potSupp, setPotSupp] = useState(profile?.defaultPotSupp ?? 0);
+  const [calSupp, setCalSupp] = useState(profile?.defaultCalSupp ?? 0);
   const [suppLog, setSuppLog] = useState({}); // { "YYYY-MM-DD": { mag: 400, pot: 0 } }
   const [myFoods, setMyFoods] = useState([]);
   const [expandedEntry, setExpandedEntry] = useState(null);

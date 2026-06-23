@@ -1653,6 +1653,7 @@ function UserTracker({ userId, profile, profiles, session }) {
                         setAnalyzeText(search);
                         setAnalyzeResult(null);
                         setAnalyzeError("");
+                        setTimeout(() => runAnalysis(), 100);
                       }} style={{ background: "#1a2a1a", border: "1px solid #2a4a2a", borderRadius: 10, padding: "10px 20px", color: "#7ec8a4", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
                         ✨ Analyze "{search}" with AI →
                       </button>

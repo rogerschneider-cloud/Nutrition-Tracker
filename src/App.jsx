@@ -61,10 +61,10 @@ const calcTargets = (profile) => {
 };
 
 const calcMineralTargets = (profile) => ({
-  sodium: profile.customSodium ?? (profile.hypertension ? 1800 : 2300),
-  calcium: profile.customCalcium ?? (profile.osteopenia ? 2000 : 1000),
+  sodium: profile.customSodium ?? 2300,
+  calcium: profile.customCalcium ?? 1200,
   magnesium: profile.customMagnesium ?? (profile.sex === "female" ? 320 : 420),
-  potassium: profile.customPotassium ?? (profile.arbMedication ? 3000 : 3500),
+  potassium: profile.customPotassium ?? 3500,
 });
 
 // Legacy helpers for backward compat during migration
@@ -81,8 +81,8 @@ const MAG_SUPPLEMENT = 400;
 
 // Default profiles (migrated from hardcoded setup)
 const DEFAULT_PROFILES = [
-  { id: "me", name: "Me", icon: "🧔", weight: 89, height: 175, age: 60, sex: "male", activity: "active", goal: "lose", dietType: "mediterranean", hypertension: false, osteopenia: false, customCarbs: 80, loggingBias: 10, quickLogBias: 15, glucoseUnit: "mmol", defaultCalSupp: 600, calSuppStep: 300 },
-  { id: "wife", name: "Liat", icon: "👩", weight: 75, height: 160, age: 58, sex: "female", activity: "moderate", goal: "lose", dietType: "mediterranean", hypertension: true, osteopenia: true, arbMedication: true, customCarbs: 80, loggingBias: 0, quickLogBias: 15, glucoseUnit: "mmol", defaultMagSupp: 320, defaultCalSupp: 1000, calSuppStep: 250 },
+  { id: "me", name: "Me", icon: "🧔", weight: 89, height: 175, age: 60, sex: "male", activity: "active", goal: "lose", dietType: "mediterranean", customCarbs: 80, loggingBias: 10, quickLogBias: 15, glucoseUnit: "mmol", defaultCalSupp: 600, calSuppStep: 300 },
+  { id: "wife", name: "Liat", icon: "👩", weight: 75, height: 160, age: 58, sex: "female", activity: "moderate", goal: "lose", dietType: "mediterranean", customCarbs: 80, loggingBias: 0, quickLogBias: 15, glucoseUnit: "mmol", defaultMagSupp: 320, defaultCalSupp: 1000, calSuppStep: 250 },
 ];
 
 const PRESET_FOODS = [
@@ -1411,7 +1411,7 @@ function UserTracker({ userId, profile, profiles, session }) {
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <span style={{ fontSize: 12, color: "#ccc", textTransform: "capitalize" }}>{key}</span>
                   {key === "magnesium" && <InfoButton topic="magnesiumTarget" />}
-                  {key === "potassium" && profile?.arbMedication && <span style={{ fontSize: 9, background: "#1a1a2a", color: "#7ec8e3", borderRadius: 10, padding: "1px 6px" }}>ℹ ARB med</span>}
+
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   {setSupp && (
@@ -2366,18 +2366,7 @@ function ProfileSetup({ profile, onSave, onCancel, isNew }) {
         </div>
       </div>
 
-      {/* Health flags */}
-      <div style={s.row}>
-        <div style={s.label}>Health Conditions</div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {[["hypertension","Hypertension"],["osteopenia","Osteopenia / Low bone density"],["kidneyIssues","Kidney Issues"],["arbMedication","ARB / ACE Inhibitor medication"]].map(([k,l]) => (
-            <button key={k} onClick={() => set(k, !form[k])}
-              style={{ padding: "7px 12px", borderRadius: 8, border: `1px solid ${form[k] ? "#ff9966" : "#2a2a2a"}`, background: form[k] ? "#2a1a0a" : "transparent", color: form[k] ? "#ff9966" : "#555", fontSize: 11, cursor: "pointer", fontWeight: 600 }}>
-              {form[k] ? "✓ " : ""}{l}
-            </button>
-          ))}
-        </div>
-      </div>
+
 
       {/* Logging bias */}
       <div style={s.row}>

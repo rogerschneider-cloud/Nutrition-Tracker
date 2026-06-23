@@ -873,6 +873,9 @@ function UserTracker({ userId, profile, profiles, session }) {
   const [exportText, setExportText] = useState("");
   const [importText, setImportText] = useState("");
   const [offDays, setOffDays] = useState({});
+  const [showGettingStarted, setShowGettingStarted] = useState(() => {
+    try { return !localStorage.getItem("nt_getting_started_dismissed"); } catch { return true; }
+  });
 
   const [analyzeMode, setAnalyzeMode] = useState(false);
   const [analyzeText, setAnalyzeText] = useState("");
@@ -1493,6 +1496,24 @@ function UserTracker({ userId, profile, profiles, session }) {
       {/* LOG tab */}
       {tab === "log" && (
         <div style={s.section}>
+          {/* Getting Started card */}
+          {showGettingStarted && (
+            <div style={{ background: "#1a2a1a", border: "1px solid #2a4a2a", borderRadius: 14, padding: "14px 16px", marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#7ec8a4", marginBottom: 8 }}>👋 Welcome to Nutrition Tracker</div>
+              <div style={{ fontSize: 12, color: "#aaa", lineHeight: 1.6, marginBottom: 12 }}>
+                <div style={{ marginBottom: 6 }}>① Tap <strong style={{ color: "#c9a96e" }}>⚙️ Edit</strong> to set up your profile — weight, height, age and goals</div>
+                <div style={{ marginBottom: 6 }}>② Each morning log yesterday's calories burned from your fitness device</div>
+                <div style={{ marginBottom: 6 }}>③ Use <strong style={{ color: "#c9a96e" }}>➕ Add</strong> to log food — by name, AI description or photo</div>
+                <div>④ Tap <strong style={{ color: "#7ec8e3" }}>?</strong> in the header anytime for a full guide</div>
+              </div>
+              <button onClick={() => {
+                setShowGettingStarted(false);
+                try { localStorage.setItem("nt_getting_started_dismissed", "1"); } catch {}
+              }} style={{ background: "#2a4a2a", border: "none", borderRadius: 8, padding: "7px 16px", color: "#7ec8a4", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+                Got it ✓
+              </button>
+            </div>
+          )}
           {/* Export/Import buttons */}
           <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
             <button onClick={exportData} style={{ flex: 1, background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "6px 0", color: "#c9a96e", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>
@@ -2674,6 +2695,7 @@ function KetoTrackerInner() {
   const [activeUser, setActiveUser] = useState("me");
   const [showSetup, setShowSetup] = useState(null); // null | "new" | profileId
   const [showShare, setShowShare] = useState(null); // profileId to share
+  const [showHelp, setShowHelp] = useState(false);
   const [pendingInvites, setPendingInvites] = useState([]);
   const [showInvites, setShowInvites] = useState(false);
 
@@ -2945,6 +2967,56 @@ function KetoTrackerInner() {
   if (!session) return <LoginScreen onAuth={(s) => setSession(s)} />;
   if (session.isPasswordReset) return <ResetPasswordScreen session={session} onDone={() => setSession(s => ({ ...s, isPasswordReset: false }))} />;
 
+  if (showHelp) return (
+    <div style={{ minHeight: "100vh", background: "#111", color: "#f0ede8", fontFamily: "system-ui, sans-serif", maxWidth: 420, margin: "0 auto", paddingBottom: 40 }}>
+      <div style={{ background: "linear-gradient(135deg, #1a1a1a 0%, #141414 100%)", borderBottom: "1px solid #2a2a2a", padding: "20px 20px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 10 }}>
+        <div style={{ fontSize: 18, fontWeight: 800, color: "#f0ede8" }}>Help & Guide</div>
+        <button onClick={() => setShowHelp(false)} style={{ background: "none", border: "1px solid #333", borderRadius: 8, padding: "6px 14px", color: "#888", fontSize: 13, cursor: "pointer" }}>✕ Close</button>
+      </div>
+      <div style={{ padding: "16px 16px 0" }}>
+        {[
+          { title: "Getting Started", icon: "🚀", content: "Set up your profile first — tap ⚙️ Edit in the top right. Enter your weight, height, age, activity level and goal. The app calculates your daily calorie and macro targets automatically using the Mifflin-St Jeor formula.
+
+Each morning, log yesterday's calories burned from your fitness device (Garmin, Apple Watch, etc.). This gives you your deficit — the difference between what you burned and what you ate." },
+          { title: "Logging Food", icon: "🍽", content: "Use the Add tab to log food. The Foods tab has preset foods and your saved 'My Foods'. The AI tab lets you describe a meal in plain language and get nutritional values back. Quick Log lets you describe your entire day at once.
+
+Tap any logged food to expand and see full nutritional detail including minerals." },
+          { title: "Deficit & Calories", icon: "🔥", content: INFO_TEXTS.deficit + "
+
+" + INFO_TEXTS.burnCalories },
+          { title: "Net Carbs", icon: "🌾", content: INFO_TEXTS.netCarbs },
+          { title: "Minerals", icon: "⚗️", content: INFO_TEXTS.minerals + "
+
+" + "Use the +/− controls next to each mineral to log supplement doses. The bar shows food intake and supplements separately." },
+          { title: "Magnesium", icon: "💜", content: INFO_TEXTS.magnesiumTarget + "
+
+" + INFO_TEXTS.mgSupp },
+          { title: "Glucose & Ketone Readings", icon: "🩸", content: INFO_TEXTS.readings },
+          { title: "Trends", icon: "📈", content: INFO_TEXTS.trends },
+          { title: "Quick Log Accuracy", icon: "⚡", content: INFO_TEXTS.quickLogBias },
+          { title: "Personal Accuracy Factor", icon: "⚖️", content: INFO_TEXTS.loggingBias },
+          { title: "Off Days", icon: "🏖", content: INFO_TEXTS.offDay },
+        ].map(({ title, icon, content: text }, i) => {
+          const [open, setOpen] = React.useState(false);
+          return (
+            <div key={i} style={{ background: "#1a1a1a", borderRadius: 12, marginBottom: 8, border: "1px solid #2a2a2a", overflow: "hidden" }}>
+              <button onClick={() => setOpen(o => !o)}
+                style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", background: "none", border: "none", color: "#f0ede8", cursor: "pointer", textAlign: "left" }}>
+                <span style={{ fontSize: 14, fontWeight: 700 }}>{icon} {title}</span>
+                <span style={{ fontSize: 12, color: "#555" }}>{open ? "▲" : "▼"}</span>
+              </button>
+              {open && (
+                <div style={{ padding: "0 16px 16px", fontSize: 13, color: "#ccc", lineHeight: 1.7, whiteSpace: "pre-line", borderTop: "1px solid #222" }}>
+                  <div style={{ paddingTop: 12 }}>{text}</div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
   return (
     <div style={{ minHeight: "100vh", background: "#111", color: "#f0ede8", fontFamily: "system-ui, sans-serif", maxWidth: 420, margin: "0 auto", paddingBottom: 80 }}>
       {/* Header */}
@@ -2958,6 +3030,10 @@ function KetoTrackerInner() {
             <button onClick={() => setShowSetup(activeUser)}
               style={{ background: "none", border: "1px solid #333", borderRadius: 8, padding: "6px 10px", color: "#888", fontSize: 11, cursor: "pointer" }}>
               ⚙️ Edit
+            </button>
+            <button onClick={() => setShowHelp(true)}
+              style={{ background: "none", border: "1px solid #333", borderRadius: 8, padding: "6px 10px", color: "#7ec8e3", fontSize: 11, cursor: "pointer", fontWeight: 700 }}>
+              ?
             </button>
             <button onClick={handleSignOut}
               style={{ background: "none", border: "1px solid #333", borderRadius: 8, padding: "6px 10px", color: "#666", fontSize: 11, cursor: "pointer" }}>

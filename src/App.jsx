@@ -2519,6 +2519,24 @@ function ProfileSetup({ profile, onSave, onCancel, isNew }) {
 // ── Root with flexible profiles ───────────────────────────────────────────────
 
 // ── Login Screen ──────────────────────────────────────────────────────────────
+function HelpItem({ title, icon, text }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ background: "#1a1a1a", borderRadius: 12, marginBottom: 8, border: "1px solid #2a2a2a", overflow: "hidden" }}>
+      <button onClick={() => setOpen(o => !o)}
+        style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", background: "none", border: "none", color: "#f0ede8", cursor: "pointer", textAlign: "left" }}>
+        <span style={{ fontSize: 14, fontWeight: 700 }}>{icon} {title}</span>
+        <span style={{ fontSize: 12, color: "#555" }}>{open ? "▲" : "▼"}</span>
+      </button>
+      {open && (
+        <div style={{ padding: "0 16px 16px", fontSize: 13, color: "#ccc", lineHeight: 1.7, whiteSpace: "pre-line", borderTop: "1px solid #222" }}>
+          <div style={{ paddingTop: 12 }}>{text}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ResetPasswordScreen({ session, onDone }) {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -2996,23 +3014,9 @@ Tap any logged food to expand and see full nutritional detail including minerals
           { title: "Quick Log Accuracy", icon: "⚡", content: INFO_TEXTS.quickLogBias },
           { title: "Personal Accuracy Factor", icon: "⚖️", content: INFO_TEXTS.loggingBias },
           { title: "Off Days", icon: "🏖", content: INFO_TEXTS.offDay },
-        ].map(({ title, icon, content: text }, i) => {
-          const [open, setOpen] = React.useState(false);
-          return (
-            <div key={i} style={{ background: "#1a1a1a", borderRadius: 12, marginBottom: 8, border: "1px solid #2a2a2a", overflow: "hidden" }}>
-              <button onClick={() => setOpen(o => !o)}
-                style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", background: "none", border: "none", color: "#f0ede8", cursor: "pointer", textAlign: "left" }}>
-                <span style={{ fontSize: 14, fontWeight: 700 }}>{icon} {title}</span>
-                <span style={{ fontSize: 12, color: "#555" }}>{open ? "▲" : "▼"}</span>
-              </button>
-              {open && (
-                <div style={{ padding: "0 16px 16px", fontSize: 13, color: "#ccc", lineHeight: 1.7, whiteSpace: "pre-line", borderTop: "1px solid #222" }}>
-                  <div style={{ paddingTop: 12 }}>{text}</div>
-                </div>
-              )}
-            </div>
-          );
-        })}
+        ].map(({ title, icon, content: text }, i) => (
+          <HelpItem key={i} title={title} icon={icon} text={text} />
+        ))}
       </div>
     </div>
   );

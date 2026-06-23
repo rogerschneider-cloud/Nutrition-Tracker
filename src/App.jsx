@@ -1697,7 +1697,7 @@ function UserTracker({ userId, profile, profiles, session }) {
                   <textarea placeholder={analyzeImage ? "Optional: add context (e.g. 'homemade, generous portion')" : "Describe your meal… e.g. 'pan-fried salmon with steamed broccoli and butter'"}
                     value={analyzeText} onChange={e => setAnalyzeText(e.target.value)}
                     style={{ ...s.input, minHeight: 80, resize: "vertical" }} />
-                  <button onClick={runAnalysis} disabled={analyzing || (!analyzeText && !analyzeImage)} style={{ ...s.btn(), width: "100%", opacity: analyzing || (!analyzeText && !analyzeImage) ? 0.5 : 1 }}>
+                  <button onClick={() => runAnalysis()} disabled={analyzing || (!analyzeText && !analyzeImage)} style={{ ...s.btn(), width: "100%", opacity: analyzing || (!analyzeText && !analyzeImage) ? 0.5 : 1 }}>
                     {analyzing ? "Analyzing…" : "✨ Analyze Meal"}
                   </button>
                   {analyzeError && <div style={{ color: "#ff6b6b", fontSize: 12, marginTop: 8 }}>{analyzeError}</div>}

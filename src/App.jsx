@@ -949,22 +949,32 @@ function UserTracker({ userId, profile, profiles, session }) {
       } else {
         try { const mf = localStorage.getItem("keto_shared_my_foods"); setMyFoods(mf ? JSON.parse(mf) : []); } catch { setMyFoods([]); }
       }
-      setDataLoaded(true);
       dataLoadedRef.current = true;
+      setDataLoaded(true);
     })();
   }, [userId]);
 
   const [dataLoaded, setDataLoaded] = useState(false);
   const dataLoadedRef = useRef(false);
+  const entriesInitializedRef = useRef(false);
+  useEffect(() => {
+    // Reset on userId change — don't save until entries are loaded from cloud
+    entriesInitializedRef.current = false;
+  }, [userId]);
   useEffect(() => {
     if (!dataLoadedRef.current) return;
+    if (!entriesInitializedRef.current) {
+      // First entries set after load — this is the cloud data coming in, don't re-save
+      entriesInitializedRef.current = true;
+      return;
+    }
     lsSet("entries_" + todayKey(), userId, entries, session?.accessToken, userId);
     setHistory(prev => {
       const hist = { ...prev, [todayKey()]: entries };
       lsSet("history", userId, hist, session?.accessToken, userId);
       return hist;
     });
-  }, [entries, userId]);
+  }, [entries]);
 
   useEffect(() => { lsSet("burn_log", userId, burnLog, session?.accessToken, userId); }, [burnLog, userId, session]);
   useEffect(() => { lsSet("eaten_override", userId, eatenOverride, session?.accessToken, userId); }, [eatenOverride, userId, session]);

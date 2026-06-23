@@ -1177,18 +1177,19 @@ function UserTracker({ userId, profile, profiles, session }) {
     img.src = objectUrl;
   };
 
-  const runAnalysis = async () => {
+  const runAnalysis = async (overrideText) => {
     setAnalyzing(true); setAnalyzeError(""); setAnalyzeResult(null); setAnalyzeNote("");
+    const textToUse = overrideText || analyzeText;
     try {
       // Build message content — include image if present
       let userContent;
       if (analyzeImage) {
         userContent = [
           { type: "image", source: { type: "base64", media_type: analyzeImage.mediaType, data: analyzeImage.base64 } },
-          { type: "text", text: analyzeText || "What food is this? Analyze its nutritional content." }
+          { type: "text", text: textToUse || "What food is this? Analyze its nutritional content." }
         ];
       } else {
-        userContent = analyzeText;
+        userContent = textToUse;
       }
       const resp = await fetch("/api/analyze", {
         method: "POST",
@@ -1201,7 +1202,7 @@ function UserTracker({ userId, profile, profiles, session }) {
       const parsed = JSON.parse(text);
       setAnalyzeNote(parsed.note || "");
       const { note, servings, ...food } = parsed;
-      const userDesc = analyzeText ? `User described: ${analyzeText}` : "";
+      const userDesc = textToUse ? `User described: ${textToUse}` : "";
       const fullNote = [note, userDesc].filter(Boolean).join(" | ");
       setAnalyzeNote(fullNote);
       setAnalyzeResult({ ...food, _unit: parsed.unit || "g" });
@@ -1653,7 +1654,7 @@ function UserTracker({ userId, profile, profiles, session }) {
                         setAnalyzeText(search);
                         setAnalyzeResult(null);
                         setAnalyzeError("");
-                        setTimeout(() => runAnalysis(), 100);
+                        setTimeout(() => runAnalysis(search), 50);
                       }} style={{ background: "#1a2a1a", border: "1px solid #2a4a2a", borderRadius: 10, padding: "10px 20px", color: "#7ec8a4", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
                         ✨ Analyze "{search}" with AI →
                       </button>

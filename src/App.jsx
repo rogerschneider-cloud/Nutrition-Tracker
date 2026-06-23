@@ -240,6 +240,24 @@ const refreshSession = async (refreshToken) => {
   return res.json();
 };
 
+const updatePassword = async (token, newPassword) => {
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+    method: "PUT",
+    headers: authHeaders(token),
+    body: JSON.stringify({ password: newPassword }),
+  });
+  return res.json();
+};
+
+const sendPasswordReset = async (email) => {
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/recover`, {
+    method: "POST",
+    headers: { "apikey": SUPABASE_ANON_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  return res.ok;
+};
+
 // Auto-refresh token if request returns 401
 const authedFetch = async (url, options = {}) => {
   const token = localStorage.getItem("nt_access_token");
@@ -2470,6 +2488,47 @@ function ProfileSetup({ profile, onSave, onCancel, isNew }) {
 // ── Root with flexible profiles ───────────────────────────────────────────────
 
 // ── Login Screen ──────────────────────────────────────────────────────────────
+function ResetPasswordScreen({ session, onDone }) {
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handle = async () => {
+    if (password.length < 6) { setError("Password must be at least 6 characters"); return; }
+    if (password !== confirm) { setError("Passwords don't match"); return; }
+    setLoading(true); setError("");
+    const res = await updatePassword(session.accessToken, password);
+    if (res.error) { setError(res.error.message || "Update failed"); setLoading(false); return; }
+    onDone();
+  };
+
+  const ls = {
+    container: { minHeight: "100vh", background: "#111", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 },
+    card: { background: "#1a1a1a", borderRadius: 16, padding: 32, width: "100%", maxWidth: 360, border: "1px solid #2a2a2a" },
+    inp: { width: "100%", background: "#111", border: "1px solid #333", borderRadius: 10, padding: "12px 14px", color: "#e0e0e0", fontSize: 14, marginBottom: 12, boxSizing: "border-box" },
+    btn: { width: "100%", background: "#c9a96e", border: "none", borderRadius: 10, padding: "13px 0", color: "#111", fontSize: 15, fontWeight: 700, cursor: "pointer" },
+  };
+
+  return (
+    <div style={ls.container}>
+      <div style={ls.card}>
+        <div style={{ fontSize: 22, fontWeight: 800, color: "#c9a96e", marginBottom: 6, textAlign: "center" }}>Set New Password</div>
+        <div style={{ fontSize: 12, color: "#555", textAlign: "center", marginBottom: 24 }}>Choose a new password for your account</div>
+        <input style={ls.inp} type="password" placeholder="New password" value={password}
+          onChange={e => setPassword(e.target.value)} autoComplete="new-password" />
+        <input style={ls.inp} type="password" placeholder="Confirm password" value={confirm}
+          onChange={e => setConfirm(e.target.value)} autoComplete="new-password"
+          onKeyDown={e => e.key === "Enter" && handle()} />
+        {error && <div style={{ color: "#ff6b6b", fontSize: 12, marginBottom: 12, textAlign: "center" }}>{error}</div>}
+        <button style={{ ...ls.btn, opacity: loading ? 0.6 : 1 }} onClick={handle} disabled={loading}>
+          {loading ? "Updating..." : "Set Password"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function LoginScreen({ onAuth }) {
   const [mode, setMode] = useState("signin");
   const [email, setEmail] = useState("");
@@ -2538,6 +2597,18 @@ function LoginScreen({ onAuth }) {
             ? <span>No account? <span style={ls.link} onClick={() => { setMode("signup"); setError(""); }}>Sign up</span></span>
             : <span>Have an account? <span style={ls.link} onClick={() => { setMode("signin"); setError(""); }}>Sign in</span></span>}
         </div>
+        {mode === "signin" && (
+          <div style={{ textAlign: "center", marginTop: 14 }}>
+            <span style={{ ...ls.link, fontSize: 12, color: "#555" }} onClick={async () => {
+              if (!email.trim()) { setError("Enter your email above first"); return; }
+              setLoading(true); setError("");
+              const ok = await sendPasswordReset(email.trim());
+              setLoading(false);
+              if (ok) setSuccess("Password reset email sent — check your inbox");
+              else setError("Couldn't send reset email");
+            }}>Forgot password?</span>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -2551,11 +2622,12 @@ function KetoTrackerInner() {
       const params = new URLSearchParams(hash.replace("#", "?"));
       const token = params.get("access_token");
       const refresh = params.get("refresh_token");
+      const type = params.get("type");
       if (token) {
         localStorage.setItem("nt_access_token", token);
         if (refresh) localStorage.setItem("nt_refresh_token", refresh);
         window.history.replaceState({}, "", window.location.pathname);
-        return { accessToken: token, refreshToken: refresh };
+        return { accessToken: token, refreshToken: refresh, isPasswordReset: type === "recovery" };
       }
     }
     const token = localStorage.getItem("nt_access_token");
@@ -2857,6 +2929,7 @@ function KetoTrackerInner() {
   }
 
   if (!session) return <LoginScreen onAuth={setSession} />;
+  if (session.isPasswordReset) return <ResetPasswordScreen session={session} onDone={() => setSession(s => ({ ...s, isPasswordReset: false }))} />;
 
   return (
     <div style={{ minHeight: "100vh", background: "#111", color: "#f0ede8", fontFamily: "system-ui, sans-serif", maxWidth: 420, margin: "0 auto", paddingBottom: 80 }}>

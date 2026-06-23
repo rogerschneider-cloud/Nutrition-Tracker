@@ -2541,6 +2541,7 @@ function ResetPasswordScreen({ session, onDone }) {
 
 function LoginScreen({ onAuth }) {
   const [mode, setMode] = useState("signin");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -2570,7 +2571,7 @@ function LoginScreen({ onAuth }) {
           // Email confirmation disabled — logged in directly
           localStorage.setItem("nt_access_token", res.access_token);
           localStorage.setItem("nt_refresh_token", res.refresh_token);
-          onAuth({ accessToken: res.access_token, refreshToken: res.refresh_token, user: res.user });
+          onAuth({ accessToken: res.access_token, refreshToken: res.refresh_token, user: res.user, signupName: name.trim() });
         } else {
           setSuccess("Account created! Sign in with your email and password.");
           setMode("signin");
@@ -2581,7 +2582,7 @@ function LoginScreen({ onAuth }) {
         else {
           localStorage.setItem("nt_access_token", res.access_token);
           localStorage.setItem("nt_refresh_token", res.refresh_token);
-          onAuth({ accessToken: res.access_token, refreshToken: res.refresh_token, user: res.user });
+          onAuth({ accessToken: res.access_token, refreshToken: res.refresh_token, user: res.user, signupName: name.trim() });
         }
       }
     } catch { setError("Network error - please try again."); }
@@ -2593,6 +2594,9 @@ function LoginScreen({ onAuth }) {
       <div style={ls.card}>
         <div style={ls.title}>Nutrition Tracker</div>
         <div style={ls.sub}>{mode === "signin" ? "Sign in to your account" : "Create a new account"}</div>
+        {mode === "signup" && (
+          <input style={ls.inp} type="text" placeholder="Your name" value={name} onChange={e => setName(e.target.value)} autoComplete="name" />
+        )}
         <input style={ls.inp} type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" />
         <input style={ls.inp} type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)}
           autoComplete={mode === "signup" ? "new-password" : "current-password"}
@@ -2718,7 +2722,7 @@ function KetoTrackerInner() {
           const user = await getUser(session.accessToken);
           const defaults = DEFAULT_PROFILES.map(p => ({
             owner_id: user.id,
-            name: p.name === "Me" ? (user.email?.split("@")[0] || "Me") : p.name,
+            name: p.name === "Me" ? (session.signupName || user.email?.split("@")[0] || "Me") : p.name,
             icon: p.icon,
             weight: p.weight, height: p.height, age: p.age, sex: p.sex,
             activity: p.activity, goal: p.goal, diet_type: p.dietType,
@@ -2938,7 +2942,7 @@ function KetoTrackerInner() {
     );
   }
 
-  if (!session) return <LoginScreen onAuth={setSession} />;
+  if (!session) return <LoginScreen onAuth={(s) => setSession(s)} />;
   if (session.isPasswordReset) return <ResetPasswordScreen session={session} onDone={() => setSession(s => ({ ...s, isPasswordReset: false }))} />;
 
   return (

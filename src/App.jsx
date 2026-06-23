@@ -978,8 +978,8 @@ function UserTracker({ userId, profile, profiles, session }) {
     });
   }, [entries]);
 
-  useEffect(() => { if (!dataLoadedRef.current) return; lsSet("burn_log", userId, burnLog, session?.accessToken, userId); }, [burnLog, userId, session]);
-  useEffect(() => { if (!dataLoadedRef.current) return; lsSet("eaten_override", userId, eatenOverride, session?.accessToken, userId); }, [eatenOverride, userId, session]);
+  useEffect(() => { if (!dataLoadedRef.current) return; if (Object.keys(burnLog).length === 0 && !dataLoaded) return; lsSet("burn_log", userId, burnLog, session?.accessToken, userId); }, [burnLog, userId, session]);
+  useEffect(() => { if (!dataLoadedRef.current) return; if (Object.keys(eatenOverride).length === 0 && !dataLoaded) return; lsSet("eaten_override", userId, eatenOverride, session?.accessToken, userId); }, [eatenOverride, userId, session]);
   useEffect(() => {
     if (!dataLoadedRef.current) return;
     lsSet("mag_supp", userId, magSupp, session?.accessToken, userId);
@@ -996,7 +996,7 @@ function UserTracker({ userId, profile, profiles, session }) {
   }, [calSupp, userId]);
   useEffect(() => { if (!dataLoadedRef.current) return; lsSet("sodium_supp", userId, sodiumSupp, session?.accessToken, userId); }, [sodiumSupp, userId]);
 
-  useEffect(() => { if (!dataLoadedRef.current) return; lsSet("off_days", userId, offDays, session?.accessToken, userId); }, [offDays, userId, session]);
+  useEffect(() => { if (!dataLoadedRef.current) return; if (Object.keys(offDays).length === 0 && !dataLoaded) return; lsSet("off_days", userId, offDays, session?.accessToken, userId); }, [offDays, userId, session]);
   useEffect(() => {
     if (!dataLoadedRef.current) return;
     const rh = lsGet("readings_history", userId) || {};

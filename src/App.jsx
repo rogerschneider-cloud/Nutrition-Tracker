@@ -1646,7 +1646,17 @@ function UserTracker({ userId, profile, profiles, session }) {
               <>
                 <input placeholder="Search all foods…" value={search} onChange={e => setSearch(e.target.value)} style={s.input} />
                 {filtered.length === 0
-                  ? <div style={{ color: "#555", fontSize: 13, textAlign: "center", padding: "20px 0" }}>No foods found</div>
+                  ? <div style={{ textAlign: "center", padding: "20px 0" }}>
+                      <div style={{ color: "#555", fontSize: 13, marginBottom: 12 }}>No foods found for "{search}"</div>
+                      <button onClick={() => {
+                        setAddSubTab("ai");
+                        setAnalyzeText(search);
+                        setAnalyzeResult(null);
+                        setAnalyzeError("");
+                      }} style={{ background: "#1a2a1a", border: "1px solid #2a4a2a", borderRadius: 10, padding: "10px 20px", color: "#7ec8a4", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+                        ✨ Analyze "{search}" with AI →
+                      </button>
+                    </div>
                   : filtered.map(f => (
                     <FoodCard key={f.id || f.name} food={f} onAdd={addFood}
                       showDelete={f._isMine} onDelete={deleteMyFood}

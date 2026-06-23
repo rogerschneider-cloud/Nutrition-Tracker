@@ -61,8 +61,8 @@ const calcTargets = (profile) => {
 };
 
 const calcMineralTargets = (profile) => ({
-  sodium: profile.hypertension ? 1800 : 2300,
-  calcium: profile.osteopenia ? 2000 : 1000,
+  sodium: profile.customSodium ?? (profile.hypertension ? 1800 : 2300),
+  calcium: profile.customCalcium ?? (profile.osteopenia ? 2000 : 1000),
   magnesium: profile.customMagnesium ?? (profile.sex === "female" ? 320 : 420),
   potassium: profile.customPotassium ?? (profile.arbMedication ? 3000 : 3500),
 });
@@ -310,13 +310,12 @@ const dbGetProfiles = async (token) => {
 const dbGetSharedProfiles = async (token) => {
   try {
     // Get profiles shared with the current user via profile_permissions
-    const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, { headers: authHeaders(token) });
+    const userRes = await authedFetch(`${SUPABASE_URL}/auth/v1/user`);
     const user = await userRes.json();
     if (!user?.email) return [];
     // Get accepted permissions for this user's email
-    const permRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/profile_permissions?invited_email=eq.${encodeURIComponent(user.email.toLowerCase())}&accepted=eq.true&select=profile_id,permission`,
-      { headers: authHeaders(token) }
+    const permRes = await authedFetch(
+      `${SUPABASE_URL}/rest/v1/profile_permissions?invited_email=eq.${encodeURIComponent(user.email.toLowerCase())}&accepted=eq.true&select=profile_id,permission`
     );
     const perms = await permRes.json();
     if (!Array.isArray(perms) || perms.length === 0) return [];
@@ -1064,20 +1063,23 @@ function UserTracker({ userId, profile, profiles, session }) {
   };
   const deleteMyFood = (id) => setMyFoods(prev => prev.filter(f => f.id !== id));
 
-  const copySelectedToOther = () => {
+  const copySelectedToOther = async () => {
     const otherProfile = profiles?.find(p => p.id !== userId);
-    const otherUserId = otherProfile?.id || (userId === "me" ? "wife" : "me");
-    const otherKey = "keto_" + otherUserId + "_entries_" + todayKey();
+    if (!otherProfile) return;
     const selected = entries.filter(e => selectedEntries[e.id]);
     if (!selected.length) return;
     try {
-      const existing = JSON.parse(localStorage.getItem(otherKey) || "[]");
+      const token = session?.accessToken;
+      // Load other profile's today entries
+      const existing = await dbGet(token, otherProfile.id, "entries_" + todayKey()) || [];
       const newEntries = selected.map(e => ({ ...e, id: "copied_" + Date.now() + Math.random() }));
-      localStorage.setItem(otherKey, JSON.stringify([...existing, ...newEntries]));
-      // Also update other user's history
-      const otherHist = JSON.parse(localStorage.getItem("keto_" + otherUserId + "_history") || "{}");
-      otherHist[todayKey()] = [...existing, ...newEntries];
-      localStorage.setItem("keto_" + otherUserId + "_history", JSON.stringify(otherHist));
+      const merged = [...existing, ...newEntries];
+      // Save to other profile
+      await dbSet(token, otherProfile.id, "entries_" + todayKey(), merged);
+      // Update their history too
+      const otherHist = await dbGet(token, otherProfile.id, "history") || {};
+      otherHist[todayKey()] = merged;
+      await dbSet(token, otherProfile.id, "history", otherHist);
       setSelectedEntries({});
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
@@ -2467,6 +2469,7 @@ function ProfileSetup({ profile, onSave, onCancel, isNew }) {
             ["customProtein", "Protein (g)", 5, 0, 300],
             ["customFat", "Fat (g)", 5, 0, 300],
             ["customSodium", "Sodium (mg)", 100, 500, 4000],
+            ["customCalcium", "Calcium (mg)", 100, 500, 3000],
             ["customMagnesium", "Magnesium (mg)", 10, 100, 800],
             ["customPotassium", "Potassium (mg)", 100, 500, 5000],
           ].map(([k, l, step, min, max]) => (

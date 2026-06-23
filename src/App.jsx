@@ -262,7 +262,7 @@ const sendPasswordReset = async (email) => {
 const authedFetch = async (url, options = {}) => {
   const token = localStorage.getItem("nt_access_token");
   const res = await fetch(url, { ...options, headers: { ...authHeaders(token), ...(options.headers || {}) } });
-  if (res.status === 401) {
+  if (res.status === 401 || res.status === 403) {
     const refresh = localStorage.getItem("nt_refresh_token");
     if (refresh) {
       const refreshRes = await refreshSession(refresh);
@@ -299,10 +299,10 @@ const dbSet = async (token, profileId, dataKey, val) => {
 
 const dbGetProfiles = async (token) => {
   try {
-    const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, { headers: authHeaders(token) });
+    const userRes = await authedFetch(`${SUPABASE_URL}/auth/v1/user`);
     const user = await userRes.json();
     if (!user?.id) return [];
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?owner_id=eq.${user.id}&select=*`, { headers: authHeaders(token) });
+    const res = await authedFetch(`${SUPABASE_URL}/rest/v1/profiles?owner_id=eq.${user.id}&select=*`);
     return await res.json();
   } catch { return []; }
 };
@@ -2762,7 +2762,8 @@ function KetoTrackerInner() {
 
         if (dbProfiles.length === 0) {
           // First time — create default profiles in Supabase
-          const user = await getUser(session.accessToken);
+          const userRes2 = await authedFetch(`${SUPABASE_URL}/auth/v1/user`);
+          const user = await userRes2.json();
           const defaults = DEFAULT_PROFILES.map(p => ({
             owner_id: user.id,
             name: p.name === "Me" ? (session.signupName || user.email?.split("@")[0] || "Me") : p.name,

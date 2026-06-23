@@ -747,7 +747,7 @@ const MiniChart = ({ data, color, target, label }) => {
 };
 
 // ── Trends view component ────────────────────────────────────────────────────
-const TrendsView = ({ history, entries, eatenOverride, burnLog, magSupp, userId, offDays, MINERAL_TARGETS, KETO_TARGETS, s }) => {
+const TrendsView = ({ history, entries, eatenOverride, burnLog, magSupp, userId, offDays, MINERAL_TARGETS, KETO_TARGETS, profile, readingsHistory, s }) => {
   const [trendView, setTrendView] = useState("deficit");
 
   const allKeys = Object.keys(history).sort();
@@ -781,6 +781,7 @@ const TrendsView = ({ history, entries, eatenOverride, burnLog, magSupp, userId,
     { id: "deficit", label: "Deficit" },
     { id: "macros", label: "Macros" },
     { id: "minerals", label: "Minerals" },
+    { id: "readings", label: "Readings" },
   ];
 
   return (
@@ -838,6 +839,64 @@ const TrendsView = ({ history, entries, eatenOverride, burnLog, magSupp, userId,
           <MiniChart data={visibleData.map(d => ({ date: d.date, value: d.potassium }))} color={MINERAL_COLORS.potassium} target={MINERAL_TARGETS.potassium} label="Potassium (mg)" />
         </div>
       )}
+
+      {trendView === "readings" && (() => {
+        const unit = profile?.glucoseUnit ?? "mmol";
+        const toDisplay = (v) => v ? (unit === "mgdl" ? Math.round(v * 18) : Math.round(v * 10) / 10) : null;
+        const unitLabel = unit === "mgdl" ? "mg/dL" : "mmol/L";
+
+        // Build per-day averages from readingsHistory
+        const allReadingKeys = Object.keys(readingsHistory || {}).sort();
+        const readingData = allReadingKeys.map(key => {
+          const dayReadings = readingsHistory[key] || [];
+          const glucoseVals = dayReadings.map(r => r.glucose).filter(Boolean);
+          const ketoneVals = dayReadings.map(r => r.ketone).filter(Boolean);
+          const bpSysVals = dayReadings.map(r => r.bpSystolic).filter(Boolean);
+          const bpDiaVals = dayReadings.map(r => r.bpDiastolic).filter(Boolean);
+          return {
+            date: formatDate(key),
+            glucose: glucoseVals.length ? Math.round(glucoseVals.reduce((a,b) => a+b,0) / glucoseVals.length * 10) / 10 : null,
+            ketone: ketoneVals.length ? Math.round(ketoneVals.reduce((a,b) => a+b,0) / ketoneVals.length * 10) / 10 : null,
+            bpSys: bpSysVals.length ? Math.round(bpSysVals.reduce((a,b) => a+b,0) / bpSysVals.length) : null,
+            bpDia: bpDiaVals.length ? Math.round(bpDiaVals.reduce((a,b) => a+b,0) / bpDiaVals.length) : null,
+          };
+        }).filter(d => d.glucose || d.ketone || d.bpSys);
+
+        const visReadings = trendRange === "All" ? readingData : readingData.slice(-trendRange);
+
+        const hasGlucose = visReadings.some(d => d.glucose);
+        const hasKetone = visReadings.some(d => d.ketone);
+        const hasBP = visReadings.some(d => d.bpSys);
+
+        if (!hasGlucose && !hasKetone && !hasBP) {
+          return (
+            <div style={{ ...s.card, margin: "0", textAlign: "center", color: "#555", padding: "30px 0", fontSize: 13 }}>
+              No readings logged yet — log glucose, ketone or blood pressure readings in the Readings tab to see trends here.
+            </div>
+          );
+        }
+
+        return (
+          <div style={{ ...s.card, margin: "0" }}>
+            {hasGlucose && <MiniChart
+              data={visReadings.filter(d => d.glucose).map(d => ({ date: d.date, value: toDisplay(d.glucose) }))}
+              color="#7ec8a4" label={`Glucose (${unitLabel}) — daily avg`}
+            />}
+            {hasKetone && <MiniChart
+              data={visReadings.filter(d => d.ketone).map(d => ({ date: d.date, value: d.ketone }))}
+              color="#7ec8e3" label="Ketones (mmol/L) — daily avg"
+            />}
+            {hasBP && <MiniChart
+              data={visReadings.filter(d => d.bpSys).map(d => ({ date: d.date, value: d.bpSys }))}
+              color="#e87777" label="Blood Pressure Systolic (mmHg)"
+            />}
+            {hasBP && <MiniChart
+              data={visReadings.filter(d => d.bpDia).map(d => ({ date: d.date, value: d.bpDia }))}
+              color="#c9a96e" label="Blood Pressure Diastolic (mmHg)"
+            />}
+          </div>
+        );
+      })()}
     </div>
   );
 };
@@ -2153,6 +2212,7 @@ function UserTracker({ userId, profile, profiles, session }) {
           MINERAL_TARGETS={MINERAL_TARGETS}
           KETO_TARGETS={USER_KETO_TARGETS}
           profile={profile}
+          readingsHistory={readingsHistory}
           s={s}
         />
       )}

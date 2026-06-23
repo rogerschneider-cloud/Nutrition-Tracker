@@ -3004,7 +3004,6 @@ function KetoTrackerInner() {
           { title: "Quick Log Accuracy", icon: "⚡", content: "AI-based Quick Log tends to underestimate calorie intake. It assumes modest portion sizes, cannot see the actual plate, and often misses added cooking fats. We recommend setting the Quick Log adjustment to at least +15% as a starting point. You can adjust this in your profile settings." },
           { title: "Personal Accuracy Factor", icon: "⚖️", content: "Food logging is never perfectly accurate. Research consistently shows people underestimate calorie intake by 20-40% on average. This factor lets you calibrate your logs to match your actual eating patterns. The adjustment applies to total calorie and macro summaries only — individual food entries are unchanged." },
           { title: "Off Days", icon: "🏖", content: "Marking a day as Off Day excludes it from your deficit totals and trend charts. Use this for social occasions, travel or days when tracking was not practical. It keeps your data clean without counting zero-intake days against your averages." },
-        ]
         ].map(({ title, icon, content: text }, i) => (
           <HelpItem key={i} title={title} icon={icon} text={text} />
         ))}

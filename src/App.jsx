@@ -2993,27 +2993,40 @@ function KetoTrackerInner() {
       </div>
       <div style={{ padding: "16px 16px 0" }}>
         {[
-          { title: "Getting Started", icon: "🚀", content: "Set up your profile first — tap ⚙️ Edit in the top right. Enter your weight, height, age, activity level and goal. The app calculates your daily calorie and macro targets automatically using the Mifflin-St Jeor formula.
+          { title: "Getting Started", icon: "🚀", content: "Set up your profile first — tap Edit in the top right. Enter your weight, height, age, activity level and goal. The app calculates your daily calorie and macro targets automatically.
 
-Each morning, log yesterday’s calories burned from your fitness device (Garmin, Apple Watch, etc.). This gives you your deficit — the difference between what you burned and what you ate." },
-          { title: "Logging Food", icon: "🍽", content: "Use the Add tab to log food. The Foods tab has preset foods and your saved 'My Foods'. The AI tab lets you describe a meal in plain language and get nutritional values back. Quick Log lets you describe your entire day at once.
+Each morning, log the previous day calories burned from your fitness device (Garmin, Apple Watch, etc.). This gives you your deficit — the difference between what you burned and what you ate." },
+          { title: "Logging Food", icon: "🍽", content: "Use the Add tab to log food. The Foods tab has preset foods and your saved My Foods list. The AI tab lets you describe a meal in plain language and get nutritional values back. Quick Log lets you describe your entire day at once.
 
 Tap any logged food to expand and see full nutritional detail including minerals." },
-          { title: "Deficit & Calories", icon: "🔥", content: INFO_TEXTS.deficit + "
+          { title: "Deficit & Calories", icon: "🔥", content: "A positive deficit means you burned more calories than you ate. A negative deficit means you ate more than you burned. Over time, consistent deficits lead to fat loss. 7,700 kcal deficit equals approximately 1kg of fat lost." },
+          { title: "Net Carbs", icon: "🌾", content: "Net Carbs = Total Carbs minus Fiber. Fiber is not digested and does not raise blood sugar, so it is subtracted. This is the number that matters for blood sugar and insulin response, not total carbs." },
+          { title: "Minerals", icon: "⚗️", content: "The four key minerals tracked here interact with each other and are commonly depleted on low-carb diets. Sodium and potassium regulate fluid balance and blood pressure. Magnesium supports over 300 enzymatic reactions including sleep and muscle function. Calcium is critical for bone density.
 
-" + INFO_TEXTS.burnCalories },
-          { title: "Net Carbs", icon: "🌾", content: INFO_TEXTS.netCarbs },
-          { title: "Minerals", icon: "⚗️", content: INFO_TEXTS.minerals + "
+Use the +/- controls next to each mineral to log supplement doses." },
+          { title: "Magnesium", icon: "💜", content: "The magnesium target is based on the NIH RDA: 420mg/day for men and 320mg/day for women aged 31+. Low-carb and Mediterranean diets can deplete magnesium faster. The upper safe limit for supplements is 350mg/day — from food there is no upper limit.
 
-" + "Use the +/− controls next to each mineral to log supplement doses. The bar shows food intake and supplements separately." },
-          { title: "Magnesium", icon: "💜", content: INFO_TEXTS.magnesiumTarget + "
+Adjust your supplement dose based on how much you got from food. The goal is to reach your daily target combining food + supplement." },
+          { title: "Glucose & Ketone Readings", icon: "🩸", content: "Log glucose and ketone readings to track your metabolic health directly.
 
-" + INFO_TEXTS.mgSupp },
-          { title: "Glucose & Ketone Readings", icon: "🩸", content: INFO_TEXTS.readings },
-          { title: "Trends", icon: "📈", content: INFO_TEXTS.trends },
-          { title: "Quick Log Accuracy", icon: "⚡", content: INFO_TEXTS.quickLogBias },
-          { title: "Personal Accuracy Factor", icon: "⚖️", content: INFO_TEXTS.loggingBias },
-          { title: "Off Days", icon: "🏖", content: INFO_TEXTS.offDay },
+Best times to measure:
+Fasting glucose: first thing in the morning
+Post-meal glucose: 1-2 hours after eating
+Ketones: afternoon or before bed
+
+Target ranges:
+Fasting glucose: 4.0-5.5 mmol/L
+Post-meal glucose: under 7.8 mmol/L
+Nutritional ketosis: 0.5-3.0 mmol/L" },
+          { title: "Trends", icon: "📈", content: "Charts show your daily averages over the selected time range. The horizontal line is your target. The average shown top-right — if it is consistently below target you may need to adjust your diet or supplements." },
+          { title: "Quick Log Accuracy", icon: "⚡", content: "AI-based Quick Log tends to underestimate calorie intake. It assumes modest portion sizes, cannot see the actual plate, and often misses added cooking fats.
+
+We recommend setting the Quick Log adjustment to at least +15% as a starting point. You can adjust this in your profile settings." },
+          { title: "Personal Accuracy Factor", icon: "⚖️", content: "Food logging is never perfectly accurate. Research consistently shows people underestimate calorie intake by 20-40% on average.
+
+This factor lets you calibrate your logs to match your actual eating patterns. The adjustment is applied to your total calorie and macro summaries only — individual food entries are unchanged." },
+          { title: "Off Days", icon: "🏖", content: "Marking a day as Off Day excludes it from your deficit totals and trend charts. Use this for social occasions, travel or days when tracking was not practical. It keeps your data clean without counting zero-intake days against your averages." },
+        ]
         ].map(({ title, icon, content: text }, i) => (
           <HelpItem key={i} title={title} icon={icon} text={text} />
         ))}

@@ -3043,7 +3043,7 @@ function KetoTrackerInner() {
               ⚙️ Edit
             </button>
             <button onClick={() => window.location.reload()}
-              style={{ background: "none", border: "1px solid #333", borderRadius: 8, padding: "6px 10px", color: "#555", fontSize: 13, cursor: "pointer" }}>
+              style={{ background: "none", border: "1px solid #7ec8a4", borderRadius: 8, padding: "6px 10px", color: "#7ec8a4", fontSize: 13, cursor: "pointer", fontWeight: 700 }}>
               ↻
             </button>
             <button onClick={() => setShowHelp(true)}

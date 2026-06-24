@@ -2686,6 +2686,35 @@ function KetoTrackerInner() {
     }
   }, []);
 
+  // Auto-refresh token when app comes back into focus (mobile tab switching)
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === "visible") {
+        const refresh = localStorage.getItem("nt_refresh_token");
+        if (!refresh) return;
+        // Check if current token is still valid
+        const token = localStorage.getItem("nt_access_token");
+        if (!token) return;
+        try {
+          const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+            headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${token}` }
+          });
+          if (res.status === 401 || res.status === 403) {
+            // Token expired — refresh it
+            const refreshRes = await refreshSession(refresh);
+            if (refreshRes.access_token) {
+              localStorage.setItem("nt_access_token", refreshRes.access_token);
+              localStorage.setItem("nt_refresh_token", refreshRes.refresh_token);
+              setSession(prev => ({ ...prev, accessToken: refreshRes.access_token, refreshToken: refreshRes.refresh_token }));
+            }
+          }
+        } catch {}
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, []);
+
   const handleSignOut = async () => {
     if (session) await signOut(session.accessToken);
     localStorage.removeItem("nt_access_token");

@@ -138,7 +138,7 @@ Respond ONLY with a valid JSON object (no markdown, no explanation, no preamble)
 }
 Round all values to 1 decimal place.`;
 
-const QUICK_LOG_PROMPT = `You are a precise nutritionist. The user will describe everything they ate today or in a meal in casual natural language — no exact measurements needed, just how they'd describe it to a friend.
+const QUICK_LOG_PROMPT = `You are a precise nutritionist. The user will describe everything they ate today or in a meal in casual natural language — no exact measurements needed, just how they'd describe it to a friend. The description may be in English or Hebrew (or mixed); understand either, but always output food names in English.
 
 Identify each distinct food item, estimate realistic portions based on typical serving sizes, and return a JSON array of food items.
 
@@ -863,6 +863,38 @@ function UserTracker({ userId, profile, profiles, session }) {
   const [quickLogResults, setQuickLogResults] = useState(null);
   const [quickLogError, setQuickLogError] = useState("");
   const [quickLogMode, setQuickLogMode] = useState("casual");
+  const [quickLogSave, setQuickLogSave] = useState({});
+
+  // Voice input state
+  const [voiceActive, setVoiceActive] = useState(false);
+  const [voiceLang, setVoiceLang] = useState("en-US");
+  const recognitionRef = useRef(null);
+  const voiceSupported = typeof window !== "undefined" && ("webkitSpeechRecognition" in window || "SpeechRecognition" in window);
+
+  const toggleVoice = () => {
+    if (voiceActive) {
+      try { recognitionRef.current && recognitionRef.current.stop(); } catch {}
+      setVoiceActive(false);
+      return;
+    }
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return;
+    const rec = new SR();
+    rec.lang = voiceLang;
+    rec.continuous = true;
+    rec.interimResults = false;
+    rec.onresult = (e) => {
+      let addition = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) addition += e.results[i][0].transcript + " ";
+      }
+      if (addition.trim()) setQuickLogText(prev => (prev ? prev.trimEnd() + " " : "") + addition.trim());
+    };
+    rec.onend = () => setVoiceActive(false);
+    rec.onerror = () => setVoiceActive(false);
+    recognitionRef.current = rec;
+    try { rec.start(); setVoiceActive(true); } catch { setVoiceActive(false); }
+  };
 
   // Readings state
   const [readings, setReadings] = useState([]);
@@ -1237,6 +1269,7 @@ function UserTracker({ userId, profile, profiles, session }) {
       }
       const parsed = JSON.parse(jsonMatch[0]);
       if (!Array.isArray(parsed) || parsed.length === 0) throw new Error("Empty result");
+      setQuickLogSave({});
       setQuickLogResults(parsed);
     } catch (e) {
       setQuickLogError(`Analysis failed: ${e.message}. Try again or break it into smaller descriptions.`);
@@ -1944,6 +1977,18 @@ function UserTracker({ userId, profile, profiles, session }) {
                 onChange={e => setQuickLogText(e.target.value)}
                 style={{ ...s.input, minHeight: 120, resize: "vertical", lineHeight: 1.5 }}
               />
+              {voiceSupported && (
+                <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                  <button onClick={toggleVoice}
+                    style={{ flex: 1, padding: "10px 0", borderRadius: 8, border: `1px solid ${voiceActive ? "#ff6b6b" : "#2a2a2a"}`, background: voiceActive ? "#2a0a0a" : "#1a1a1a", color: voiceActive ? "#ff6b6b" : "#c9a96e", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
+                    {voiceActive ? "⏹ Stop listening" : "🎤 Speak your meal"}
+                  </button>
+                  <button onClick={() => setVoiceLang(l => l === "en-US" ? "he-IL" : "en-US")} disabled={voiceActive}
+                    style={{ width: 70, padding: "10px 0", borderRadius: 8, border: "1px solid #2a2a2a", background: "transparent", color: "#888", fontWeight: 600, fontSize: 13, cursor: "pointer", opacity: voiceActive ? 0.4 : 1 }}>
+                    {voiceLang === "en-US" ? "EN" : "עב"}
+                  </button>
+                </div>
+              )}
               <button onClick={runQuickLog} disabled={quickLogging || !quickLogText.trim()}
                 style={{ ...s.btn(), width: "100%", opacity: quickLogging || !quickLogText.trim() ? 0.5 : 1 }}>
                 {quickLogging ? "Analyzing your day…" : "⚡ Log Everything"}
@@ -1953,7 +1998,7 @@ function UserTracker({ userId, profile, profiles, session }) {
           ) : (
             <div>
               <div style={{ fontSize: 13, color: "#888", marginBottom: 12 }}>
-                Found {quickLogResults.length} items — review and add all to your log:
+                Found {quickLogResults.length} items — review, star anything you'll eat again, then add:
               </div>
               {quickLogResults.map((item, i) => (
                 <div key={i} style={{ background: "#1a1a1a", borderRadius: 10, padding: "10px 14px", marginBottom: 8, border: "1px solid #252525" }}>
@@ -1968,6 +2013,10 @@ function UserTracker({ userId, profile, profiles, session }) {
                       <div style={{ fontSize: 10, color: "#666" }}>kcal</div>
                     </div>
                   </div>
+                  <button onClick={() => setQuickLogSave(prev => ({ ...prev, [i]: !prev[i] }))}
+                    style={{ marginTop: 8, padding: "5px 10px", borderRadius: 6, border: `1px solid ${quickLogSave[i] ? "#2a4a2a" : "#2a2a2a"}`, background: quickLogSave[i] ? "#1a2a1a" : "transparent", color: quickLogSave[i] ? "#7ec8a4" : "#666", fontWeight: 600, fontSize: 11, cursor: "pointer" }}>
+                    {quickLogSave[i] ? "★ Will also save to My Foods" : "☆ Also save to My Foods"}
+                  </button>
                 </div>
               ))}
               <div style={{ background: "#1a1a1a", borderRadius: 10, padding: "10px 14px", marginBottom: 12, border: "1px solid #2a2a2a" }}>
@@ -1985,8 +2034,11 @@ function UserTracker({ userId, profile, profiles, session }) {
                 </div>}
               </div>
               <div style={{ display: "flex", gap: 8 }}>
-                <button onClick={() => addAllQuickLog(quickLogResults, quickLogMode)} style={{ ...s.btn(), flex: 1 }}>
-                  + Add All to Log
+                <button onClick={() => {
+                  quickLogResults.forEach((item, i) => { if (quickLogSave[i]) saveToMyFoods(item, item.note || ""); });
+                  addAllQuickLog(quickLogResults, quickLogMode);
+                }} style={{ ...s.btn(), flex: 1 }}>
+                  + Add All to Log{Object.values(quickLogSave).some(Boolean) ? " & Save ★" : ""}
                 </button>
                 <button onClick={() => { setQuickLogResults(null); setQuickLogText(""); }}
                   style={{ ...s.btn("#1e1e1e", "#888"), padding: "10px 16px", border: "1px solid #333" }}>

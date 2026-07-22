@@ -120,7 +120,7 @@ CRITICAL RULES:
 3. If no weight is specified: solid foods normalize to per 100g; liquids/smoothies normalize to per 100ml; countable items (eggs, bars, muffins) give values per 1 unit and set "unit" to "each".
 4. Only estimate values for ingredients where no label data is provided.
 
-Respond ONLY with a valid JSON object (no markdown, no explanation) in this exact shape:
+Respond ONLY with a valid JSON object (no markdown, no explanation, no preamble). The very first character of your response MUST be { and the last character MUST be }. Never begin with words like "Reading", "The label", "Here" — output the JSON object and nothing else. This exact shape:
 {
   "name": "Short food name (include weight in name if specified, e.g. 'Chicken breast (200g)' or 'Greek Yogurt (per 100g)')",
   "unit": "g",
@@ -1169,15 +1169,31 @@ function UserTracker({ userId, profile, profiles, session }) {
       } else {
         userContent = textToUse;
       }
-      const resp = await fetch("/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 1000, system: ANALYZE_PROMPT, messages: [{ role: "user", content: userContent }] }),
-      });
-      const data = await resp.json();
-      if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
-      const text = data.content.map(b => b.text || "").join("").replace(/```json|```/g, "").trim();
-      const parsed = JSON.parse(text);
+      const callApi = async (extraReminder) => {
+        const messages = [{ role: "user", content: userContent }];
+        if (extraReminder) messages.push({ role: "assistant", content: "{" });
+        const resp = await fetch("/api/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 1000, system: ANALYZE_PROMPT, messages }),
+        });
+        const data = await resp.json();
+        if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+        let raw = data.content.map(b => b.text || "").join("");
+        if (extraReminder) raw = "{" + raw; // we pre-filled the opening brace
+        // Extract the JSON object even if the model added extra text around it
+        const cleaned = raw.replace(/```json/g, "").replace(/```/g, "").trim();
+        const m = cleaned.match(/\{[\s\S]*\}/);
+        if (!m) throw new Error("no-json");
+        return JSON.parse(m[0]);
+      };
+      let parsed;
+      try {
+        parsed = await callApi(false);
+      } catch (firstErr) {
+        // One automatic retry, forcing the reply to start with {
+        parsed = await callApi(true);
+      }
       setAnalyzeNote(parsed.note || "");
       const { note, servings, ...food } = parsed;
       const userDesc = textToUse ? `User described: ${textToUse}` : "";
@@ -1185,7 +1201,8 @@ function UserTracker({ userId, profile, profiles, session }) {
       setAnalyzeNote(fullNote);
       setAnalyzeResult({ ...food, _unit: parsed.unit || "g" });
     } catch (err) {
-      setAnalyzeError("Couldn't analyze — " + (err.message || "try describing it in more detail."));
+      const msg = (err && err.message && !/Unexpected token|no-json|JSON/i.test(err.message)) ? err.message : "the AI reply wasn't usable. Please tap Analyze Meal again.";
+      setAnalyzeError("Couldn't analyze — " + msg);
     }
     setAnalyzing(false);
   };

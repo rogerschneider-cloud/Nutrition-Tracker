@@ -974,13 +974,13 @@ function UserTracker({ userId, profile, profiles, session }) {
   useEffect(() => {
     if (!dataLoadedRef.current) return;
     if (!entriesInitializedRef.current) {
-      // First entries set after load — this is the cloud data coming in, mark loaded
+      // Mark initialized on the first run after load, but STILL save if the
+      // user already has entries in state (a real change), so nothing is lost.
       entriesInitializedRef.current = true;
       loadedForUserRef.current = userId;
-      return;
+      if (!entries || entries.length === 0) return; // truly empty load — nothing to save
     }
-    // Only save if we're still on the same user we loaded for
-    if (loadedForUserRef.current !== userId) return;
+    if (loadedForUserRef.current !== userId) loadedForUserRef.current = userId;
     lsSet("entries_" + todayKey(), userId, entries, session?.accessToken, userId);
     setHistory(prev => {
       const hist = { ...prev, [todayKey()]: entries };

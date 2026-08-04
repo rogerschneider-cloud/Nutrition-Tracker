@@ -837,6 +837,8 @@ function UserTracker({ userId, profile, profiles, session }) {
   const [myFoods, setMyFoods] = useState([]);
   const [expandedEntry, setExpandedEntry] = useState(null);
   const [expandedHistoryDay, setExpandedHistoryDay] = useState(null);
+  const [addFoodDay, setAddFoodDay] = useState("");
+  const [historyFoodSearch, setHistoryFoodSearch] = useState("");
   const [selectedEntries, setSelectedEntries] = useState({});
   const [copySuccess, setCopySuccess] = useState(false);
   const [showDataModal, setShowDataModal] = useState(null);
@@ -864,6 +866,7 @@ function UserTracker({ userId, profile, profiles, session }) {
   const [quickLogError, setQuickLogError] = useState("");
   const [quickLogMode, setQuickLogMode] = useState("casual");
   const [quickLogSave, setQuickLogSave] = useState({});
+  const [fabHidden, setFabHidden] = useState(false);
 
   // Voice input state
   const [voiceActive, setVoiceActive] = useState(false);
@@ -1055,6 +1058,21 @@ function UserTracker({ userId, profile, profiles, session }) {
     setSearch(""); setMyFoodsSearch(""); setTab("log");
   };
   const removeEntry = (id) => setEntries(prev => prev.filter(e => e.id !== id));
+
+  // Add a food to a past day (today goes through the normal entries state)
+  const addFoodToDate = (dayKey, food) => {
+    if (dayKey === todayKey()) {
+      setEntries(prev => [...prev, { ...food, id: Date.now() + Math.random() }]);
+    } else {
+      const updated = { ...history };
+      updated[dayKey] = [...(updated[dayKey] || []), { ...food, id: Date.now() + Math.random() }];
+      setHistory(updated);
+      lsSet("history", userId, updated, session?.accessToken, userId);
+      lsSet("entries_" + dayKey, userId, updated[dayKey], session?.accessToken, userId);
+    }
+    setHistoryFoodSearch("");
+    setAddFoodDay("");
+  };
 
   const saveBurn = (key, val) => {
     const n = parseInt(val);
@@ -2098,8 +2116,8 @@ function UserTracker({ userId, profile, profiles, session }) {
                               const updated = { ...history };
                               updated[day.key] = dayEntries.filter((_, idx) => idx !== i);
                               setHistory(updated);
-                              lsSet("history", userId, updated);
-                              lsSet("entries_" + day.key, userId, updated[day.key]);
+                              lsSet("history", userId, updated, session?.accessToken, userId);
+                              lsSet("entries_" + day.key, userId, updated[day.key], session?.accessToken, userId);
                             }} style={{ background: "none", border: "none", color: "#444", cursor: "pointer", fontSize: 15, padding: 0 }}>×</button>
                           )}
                         </div>
@@ -2128,7 +2146,39 @@ function UserTracker({ userId, profile, profiles, session }) {
                     style={{ ...s.btn(day.isOff ? "#2a1a1a" : "#1e1e1e", day.isOff ? "#ff9966" : "#555"), padding: "5px 10px", fontSize: 11, border: `1px solid ${day.isOff ? "#4a2a1a" : "#2a2a2a"}` }}>
                     {day.isOff ? "🏖 Off day" : "Mark off day"}<InfoButton topic="offDay" style={{ marginLeft: 4 }} />
                   </button>
+                  <button onClick={() => { setAddFoodDay(addFoodDay === day.key ? "" : day.key); setHistoryFoodSearch(""); setExpandedHistoryDay(day.key); }}
+                    style={{ ...s.btn(addFoodDay === day.key ? "#2a2416" : "#1e1e1e", addFoodDay === day.key ? "#c9a96e" : "#666"), padding: "5px 10px", fontSize: 11, border: `1px solid ${addFoodDay === day.key ? "#3a2e1a" : "#2a2a2a"}` }}>
+                    {addFoodDay === day.key ? "✕ Close" : "+ Add food"}
+                  </button>
                 </div>}
+              {/* Add forgotten food to this day */}
+              {addFoodDay === day.key && (() => {
+                const pool = [
+                  ...myFoods.map(f => ({ ...f, _isMine: true })),
+                  ...PRESET_FOODS.filter(p => !myFoods.find(m => m.name === p.name)).map(f => ({ ...f, _isMine: false })),
+                ];
+                const q = historyFoodSearch.trim().toLowerCase();
+                const hits = q ? pool.filter(f => f.name.toLowerCase().includes(q)).slice(0, 6) : [];
+                return (
+                  <div style={{ marginTop: 8, padding: 10, background: "#141414", borderRadius: 10, border: "1px solid #2a2a2a" }}>
+                    <div style={{ fontSize: 11, color: "#888", marginBottom: 6 }}>
+                      Add a forgotten food to {day.isToday ? "today" : day.date}
+                    </div>
+                    <input autoFocus placeholder="Search your foods…" value={historyFoodSearch}
+                      onChange={e => setHistoryFoodSearch(e.target.value)}
+                      style={{ ...s.input, margin: 0, marginBottom: 8, fontSize: 12, padding: "8px 10px" }} />
+                    {q && hits.length === 0 && (
+                      <div style={{ fontSize: 11, color: "#555", textAlign: "center", padding: "6px 0" }}>
+                        No match — add it under the Add tab first, then it'll appear here.
+                      </div>
+                    )}
+                    {hits.map(f => (
+                      <FoodCard key={(f.id || f.name) + "_h"} food={f}
+                        onAdd={(scaledFood) => addFoodToDate(day.key, scaledFood)} />
+                    ))}
+                  </div>
+                );
+              })()}
               {/* Eaten edit */}
               {eatenEditDay === day.key
                 ? <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
@@ -2199,6 +2249,22 @@ function UserTracker({ userId, profile, profiles, session }) {
           readingsHistory={readingsHistory}
           s={s}
         />
+      )}
+
+      {/* Floating Quick Log button */}
+      {!fabHidden && !(tab === "add" && addSubTab === "quick") && (
+        <div style={{ position: "fixed", bottom: 22, right: 16, zIndex: 900 }}>
+          <button onClick={() => {
+            setTab("add"); setAddSubTab("quick"); setQuickLogResults(null); resetAnalyze();
+            try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch {}
+          }}
+            style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1, width: 82, height: 82, borderRadius: "50%", border: "none", background: "#7ec8e3", color: "#10262e", cursor: "pointer", boxShadow: "0 6px 22px rgba(0,0,0,0.55)", padding: 0, lineHeight: 1 }}>
+            <span style={{ fontSize: 26 }}>⚡</span>
+            <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: "0.02em" }}>Quick Log</span>
+          </button>
+          <button onClick={() => setFabHidden(true)} aria-label="Hide"
+            style={{ position: "absolute", top: -7, right: -7, width: 24, height: 24, borderRadius: "50%", border: "1px solid #3a3a3a", background: "#1e1e1e", color: "#999", fontSize: 13, lineHeight: "22px", padding: 0, cursor: "pointer" }}>×</button>
+        </div>
       )}
 
     </div>
@@ -2407,7 +2473,7 @@ function ProfileSetup({ profile, onSave, onCancel, isNew }) {
         <div style={s.label}>Diet Type</div>
         <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
           {Object.entries(DIET_PRESETS).map(([k,v]) => (
-            <button key={k} style={{ ...s.seg(form.dietType === k), fontSize: 11 }} onClick={() => set("dietType", k)}>{v.label}</button>
+            <button key={k} style={{ ...s.seg(form.dietType === k), fontSize: 11 }} onClick={() => setForm(prev => ({ ...prev, dietType: k, customCarbs: k === "custom" ? (prev.customCarbs ?? DIET_PRESETS.custom.carbs) : undefined }))}>{v.label}</button>
           ))}
         </div>
       </div>
@@ -2871,8 +2937,17 @@ function KetoTrackerInner() {
           activity: p.activity, goal: p.goal, dietType: p.diet_type,
           hypertension: p.hypertension, osteopenia: p.osteopenia,
           arbMedication: p.arb_medication,
-          customCarbs: p.custom_carbs, loggingBias: p.logging_bias,
+          customCarbs: p.custom_carbs ?? undefined,
+          customProtein: p.custom_protein ?? undefined,
+          customFat: p.custom_fat ?? undefined,
+          customFiber: p.custom_fiber ?? undefined,
+          customSodium: p.custom_sodium ?? undefined,
+          customCalcium: p.custom_calcium ?? undefined,
+          customMagnesium: p.custom_magnesium ?? undefined,
+          customPotassium: p.custom_potassium ?? undefined,
+          loggingBias: p.logging_bias,
           quickLogBias: p.quick_log_bias, glucoseUnit: p.glucose_unit,
+          defaultSodiumSupp: p.default_sodium_supp ?? undefined,
           defaultMagSupp: p.default_mag_supp, defaultPotSupp: p.default_pot_supp,
           defaultCalSupp: p.default_cal_supp, calSuppStep: p.cal_supp_step,
         }));
@@ -2885,8 +2960,17 @@ function KetoTrackerInner() {
           activity: p.activity, goal: p.goal, dietType: p.diet_type,
           hypertension: p.hypertension, osteopenia: p.osteopenia,
           arbMedication: p.arb_medication,
-          customCarbs: p.custom_carbs, loggingBias: p.logging_bias,
+          customCarbs: p.custom_carbs ?? undefined,
+          customProtein: p.custom_protein ?? undefined,
+          customFat: p.custom_fat ?? undefined,
+          customFiber: p.custom_fiber ?? undefined,
+          customSodium: p.custom_sodium ?? undefined,
+          customCalcium: p.custom_calcium ?? undefined,
+          customMagnesium: p.custom_magnesium ?? undefined,
+          customPotassium: p.custom_potassium ?? undefined,
+          loggingBias: p.logging_bias,
           quickLogBias: p.quick_log_bias, glucoseUnit: p.glucose_unit,
+          defaultSodiumSupp: p.default_sodium_supp ?? undefined,
           defaultMagSupp: p.default_mag_supp, defaultPotSupp: p.default_pot_supp,
           defaultCalSupp: p.default_cal_supp, calSuppStep: p.cal_supp_step,
           _shared: true,
@@ -2912,6 +2996,32 @@ function KetoTrackerInner() {
     localStorage.setItem("keto_profiles", JSON.stringify(updated));
   };
 
+  // Build the DB column payload from the form. undefined → null so cleared
+  // overrides actually reset in the database (JSON.stringify drops undefined).
+  const nn = (v) => (v === undefined || v === "" ? null : v);
+  const profileDbFields = (form) => ({
+    name: form.name, icon: form.icon,
+    weight: form.weight, height: form.height, age: form.age, sex: form.sex,
+    activity: form.activity, goal: form.goal, diet_type: form.dietType,
+    hypertension: form.hypertension, osteopenia: form.osteopenia,
+    arb_medication: form.arbMedication || false,
+    custom_carbs: nn(form.customCarbs),
+    custom_protein: nn(form.customProtein),
+    custom_fat: nn(form.customFat),
+    custom_fiber: nn(form.customFiber),
+    custom_sodium: nn(form.customSodium),
+    custom_calcium: nn(form.customCalcium),
+    custom_magnesium: nn(form.customMagnesium),
+    custom_potassium: nn(form.customPotassium),
+    logging_bias: form.loggingBias,
+    quick_log_bias: form.quickLogBias, glucose_unit: form.glucoseUnit,
+    default_sodium_supp: nn(form.defaultSodiumSupp),
+    default_mag_supp: form.defaultMagSupp || 0,
+    default_cal_supp: form.defaultCalSupp || 0,
+    default_pot_supp: nn(form.defaultPotSupp),
+    cal_supp_step: form.calSuppStep || 250,
+  });
+
   const handleSaveProfile = async (form) => {
     if (showSetup === "new") {
       // Create new profile in Supabase
@@ -2919,16 +3029,7 @@ function KetoTrackerInner() {
         const user = await getUser(session.accessToken);
         const created = await dbCreateProfile(session.accessToken, {
           owner_id: user.id,
-          name: form.name, icon: form.icon,
-          weight: form.weight, height: form.height, age: form.age, sex: form.sex,
-          activity: form.activity, goal: form.goal, diet_type: form.dietType,
-          hypertension: form.hypertension, osteopenia: form.osteopenia,
-          arb_medication: form.arbMedication || false,
-          custom_carbs: form.customCarbs, logging_bias: form.loggingBias,
-          quick_log_bias: form.quickLogBias, glucose_unit: form.glucoseUnit,
-          default_mag_supp: form.defaultMagSupp || 0,
-          default_cal_supp: form.defaultCalSupp || 0,
-          cal_supp_step: form.calSuppStep || 250,
+          ...profileDbFields(form),
         });
         if (created) {
           const newProfile = { ...form, id: created.id };
@@ -2940,18 +3041,7 @@ function KetoTrackerInner() {
     } else {
       // Update existing profile in Supabase
       try {
-        await dbUpdateProfile(session.accessToken, form.id, {
-          name: form.name, icon: form.icon,
-          weight: form.weight, height: form.height, age: form.age, sex: form.sex,
-          activity: form.activity, goal: form.goal, diet_type: form.dietType,
-          hypertension: form.hypertension, osteopenia: form.osteopenia,
-          arb_medication: form.arbMedication || false,
-          custom_carbs: form.customCarbs, logging_bias: form.loggingBias,
-          quick_log_bias: form.quickLogBias, glucose_unit: form.glucoseUnit,
-          default_mag_supp: form.defaultMagSupp || 0,
-          default_cal_supp: form.defaultCalSupp || 0,
-          cal_supp_step: form.calSuppStep || 250,
-        });
+        await dbUpdateProfile(session.accessToken, form.id, profileDbFields(form));
       } catch { console.warn("Profile update failed"); }
       const updated = profiles.map(p => p.id === form.id ? form : p);
       saveProfiles(updated);

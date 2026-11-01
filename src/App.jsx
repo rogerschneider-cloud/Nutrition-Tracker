@@ -67,6 +67,21 @@ const calcMineralTargets = (profile) => ({
   potassium: profile.customPotassium ?? 3500,
 });
 
+// Header label: chosen diet type, plus "(adjusted)" when any target differs from that diet's calculated default
+const dietHeaderLabel = (profile) => {
+  const key = DIET_PRESETS[profile?.dietType] ? profile.dietType : "mediterranean";
+  const label = DIET_PRESETS[key].label.replace("Mediterranean Glycemic Load", "Mediterranean · Glycemic Load");
+  if (key === "custom" || !profile) return label;
+  try {
+    const base = { ...profile, customCarbs: undefined, customProtein: undefined, customFat: undefined, customFiber: undefined,
+      customSodium: undefined, customCalcium: undefined, customMagnesium: undefined, customPotassium: undefined };
+    const a = { ...calcTargets(profile), ...calcMineralTargets(profile) };
+    const b = { ...calcTargets(base), ...calcMineralTargets(base) };
+    const adjusted = Object.keys(b).some(k => !Object.is(a[k], b[k]));
+    return adjusted ? label + " (adjusted)" : label;
+  } catch { return label; }
+};
+
 // Legacy helpers for backward compat during migration
 const getKetoTargets = (userId, profiles) => {
   const p = profiles?.find(p => p.id === userId);
@@ -3147,7 +3162,7 @@ function KetoTrackerInner() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
             <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.5, color: "#f0ede8" }}>Nutrition Tracker</div>
-            <div style={{ fontSize: 12, color: "#c9a96e", letterSpacing: 2, textTransform: "uppercase", marginTop: 2, marginBottom: 14 }}>🏔 Mediterranean · Glycemic Load</div>
+            <div style={{ fontSize: 12, color: "#c9a96e", letterSpacing: 2, textTransform: "uppercase", marginTop: 2, marginBottom: 14 }}>🏔 {dietHeaderLabel(activeProfile)}</div>
           </div>
           <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
             <button onClick={() => setShowSetup(activeUser)}

@@ -7,7 +7,7 @@ class ErrorBoundary extends Component {
     if (this.state.error) return (
       <div style={{ padding: 30, background: "#111", color: "#ff6b6b", minHeight: "100vh", fontFamily: "sans-serif" }}>
         <div style={{ fontSize: 18, marginBottom: 10 }}>App Error</div>
-        <div style={{ fontSize: 12, color: "#888", marginBottom: 20 }}>{this.state.error.message}</div>
+        <div style={{ fontSize: 12, color: "#c2c2c2", marginBottom: 20 }}>{this.state.error.message}</div>
         <button onClick={() => { localStorage.clear(); window.location.reload(); }}
           style={{ background: "#c9a96e", border: "none", borderRadius: 8, padding: "10px 20px", color: "#111", cursor: "pointer" }}>
           Clear & Reload
@@ -463,7 +463,6 @@ const INFO_TEXTS = {
   trends: "Charts show your daily averages over the selected time range. The horizontal line is your target. Average shown top-right — if it's consistently below target (red) you may need to adjust your diet or supplements. Deficit chart shows cumulative fat loss potential over time.",
   offDay: "Marking a day as Off Day excludes it from your deficit totals and trend charts. Use this for social occasions, travel or days when tracking wasn't practical. It keeps your data clean without counting zero-intake days against your averages.",
   readings: "Glucose and ketone readings give you a direct window into your metabolic health that food logging alone cannot provide.\n\n📊 WHAT THE READINGS TELL YOU\nGlucose shows how your body is responding to the food you eat. A well-controlled glucose response — no sharp spikes and slow return to baseline — indicates good insulin sensitivity and low Glycemic Load eating. Ketones show whether your body is burning fat for fuel. Even on a Mediterranean Glycemic Load diet you can maintain light to nutritional ketosis, especially if you exercise.\n\n⏰ WHEN TO MEASURE\nFasting glucose: first thing in the morning before eating — your most important baseline reading.\nPost-meal glucose: 1-2 hours after eating — shows how specific meals affect your blood sugar.\nKetones: best measured in the afternoon (morning ketones are often lower) or before bed.\nPre/post workout: interesting to see how exercise affects both readings.\n\n🎨 WHAT THE COLORS MEAN\nGlucose — Green: normal healthy range. Amber: elevated, worth noting what you ate. Red: high, look at recent food choices. Yellow: low, eat something.\nKetones — Grey: not in ketosis. Blue: light ketosis, fat burning beginning. Green: nutritional ketosis, optimal fat burning zone. Amber: deep ketosis, fine for most people. Red: very high, consult your doctor.\n\n🔗 THE TWO READINGS TOGETHER\nLow glucose + moderate ketones = ideal metabolic state for fat loss and sustained energy.\nLow glucose + low ketones = burning glucose efficiently, not yet in fat burning mode.\nHigh glucose + low ketones = too many carbs or stress response, insulin doing its job.\nNormal glucose + high ketones = extended fasting or very low carb eating.\n\nOver time, tracking both alongside your food log reveals which specific meals and habits produce your best metabolic response — that insight is more valuable than any general dietary guideline.",
-  quickLogBias: "AI-based Quick Log tends to underestimate calorie intake for several reasons: it assumes modest portion sizes, cannot see the actual plate, often misses added cooking fats like olive oil, and defaults to conservative estimates when details are missing.\n\nResearch on AI food recognition suggests it typically underestimates by 15-25% compared to careful manual logging.\n\nWe recommend setting this adjustment to at least +15% as a starting point. Compare your Quick Log estimates against careful manual logging for a week, then fine-tune this slider to match your personal pattern.\n\nSetting this correctly puts you in control — the AI gives you the speed, you provide the calibration. That combination is more accurate than either alone.",
   loggingBias: "Food logging is never perfectly accurate — and that's normal. Research consistently shows people underestimate calorie intake by 20-40% on average, even when trying to be precise. Common reasons: generous pour of olive oil logged as 'one tablespoon', forgetting a handful of nuts, underestimating restaurant portions, or simply being too kind to yourself with estimates.\n\nThis Personal Accuracy Factor lets you calibrate your logs to match your actual eating patterns. If you know you tend to be generous with portions or forget snacks, set it to +10% or +15%. If you log obsessively and tend to overcount, set it to -5% or -10%.\n\nThe adjustment is applied to your total calorie and macro summaries only — individual food entries are unchanged. This affects your deficit calculations and trend averages, giving you a more realistic picture.\n\nThis is not cheating — it's honest calibration. Even professional dietitian-supervised food logs have a ±20% margin of error. The most accurate logging system is the one that reflects how you actually eat — and that honesty is what contributes to your long-term success.",
   minerals: "The four key minerals tracked here interact with each other and are commonly depleted on low-carb diets. Sodium and potassium regulate fluid balance and blood pressure. Magnesium supports over 300 enzymatic reactions including sleep and muscle function. Calcium is critical for bone density.",
   activityLevel: "Choose the level that best describes your typical week — be honest, most people overestimate their activity level.\n\nSedentary: Desk job, little or no exercise. Most of your day is sitting.\n\nLight: Light exercise 1-3 days per week, or a job that involves some walking.\n\nModerate: Moderate exercise 3-5 days per week. You work out regularly but it is not intense.\n\nActive: Hard exercise 6-7 days per week, or a physically demanding job plus regular training.\n\nVery Active: Very hard exercise twice a day, or an extremely physical job like construction or professional athlete level training.\n\nIf in doubt, choose one level lower than you think — it is better to underestimate and adjust than to set an unrealistic target.",
@@ -507,10 +506,10 @@ const Ring = ({ value, max, color, label, unit, size = 76, info, positiveOver })
       </svg>
       <div style={{ marginTop: -size / 2 - 3, textAlign: "center", position: "relative", zIndex: 1, lineHeight: 1.2 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: over ? (positiveOver ? "#7ec8a4" : "#ff4444") : "#f0ede8", fontFamily: "monospace" }}>{Math.round(value)}</div>
-        <div style={{ fontSize: 9, color: "#777", textTransform: "uppercase", letterSpacing: 1 }}>{unit}</div>
+        <div style={{ fontSize: 9, color: "#bcbcbc", textTransform: "uppercase", letterSpacing: 1 }}>{unit}</div>
       </div>
       <div style={{ fontSize: 10, color: "#aaa", textTransform: "uppercase", letterSpacing: 0.5, marginTop: size / 2 - 9, display: "flex", alignItems: "center", gap: 2 }}>{label}{info && <InfoButton topic={info} />}</div>
-      <div style={{ fontSize: 10, color: "#555" }}>{Math.round(value)}/{max}</div>
+      <div style={{ fontSize: 10, color: "#adadad" }}>{Math.round(value)}/{max}</div>
     </div>
   );
 };
@@ -565,19 +564,19 @@ const FoodCard = ({ food, onAdd, onDelete, showDelete, onEditWithAI }) => {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px" }}>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 13, fontWeight: 600 }}>{food.name}</div>
-          <div style={{ fontSize: 11, color: "#888", marginTop: 1 }}>
+          <div style={{ fontSize: 11, color: "#c2c2c2", marginTop: 1 }}>
             F:{hasQty ? scaled(food.fat) : food.fat}g · P:{hasQty ? scaled(food.protein) : food.protein}g · NC:{hasQty ? Math.max(0, scaled(food.carbs) - scaled(food.fiber)).toFixed(1) : Math.max(0,(food.carbs||0)-(food.fiber||0)).toFixed(1)}g
           </div>
-          <div style={{ fontSize: 10, color: "#666", marginTop: 1 }}>Na:{hasQty ? scaled(food.sodium||0) : (food.sodium||0)} · Ca:{hasQty ? scaled(food.calcium||0) : (food.calcium||0)} · Mg:{hasQty ? scaled(food.magnesium||0) : (food.magnesium||0)} · K:{hasQty ? scaled(food.potassium||0) : (food.potassium||0)} mg</div>
+          <div style={{ fontSize: 10, color: "#b6b6b6", marginTop: 1 }}>Na:{hasQty ? scaled(food.sodium||0) : (food.sodium||0)} · Ca:{hasQty ? scaled(food.calcium||0) : (food.calcium||0)} · Mg:{hasQty ? scaled(food.magnesium||0) : (food.magnesium||0)} · K:{hasQty ? scaled(food.potassium||0) : (food.potassium||0)} mg</div>
           {food.notes && <div style={{ fontSize: 10, color: "#7ec8a4", marginTop: 3, fontStyle: "italic" }}>📝 {food.notes}</div>}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 50, justifyContent: "flex-end" }}>
           <div style={{ textAlign: "right" }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: "#c9a96e" }}>{hasQty ? scaled(food.calories) : food.calories}</div>
-            <div style={{ fontSize: 10, color: "#666" }}>kcal</div>
+            <div style={{ fontSize: 10, color: "#b6b6b6" }}>kcal</div>
           </div>
           {showDelete && (
-            <button onClick={() => onDelete(food.id)} style={{ background: "none", border: "none", color: "#555", cursor: "pointer", fontSize: 15, padding: 0, lineHeight: 1 }}>🗑</button>
+            <button onClick={() => onDelete(food.id)} style={{ background: "none", border: "none", color: "#adadad", cursor: "pointer", fontSize: 15, padding: 0, lineHeight: 1 }}>🗑</button>
           )}
           {showDelete && onEditWithAI && (
             <button onClick={() => onEditWithAI(food)} style={{ background: "none", border: "none", color: "#7ec8a4", cursor: "pointer", fontSize: 13, padding: 0, lineHeight: 1 }} title="Edit with AI">✏️</button>
@@ -624,20 +623,20 @@ const MiniChart = ({ data, color, target, label }) => {
         <span style={{ fontSize: 11, color: "#aaa" }}>{label}</span>
         <div style={{ display: "flex", gap: 10 }}>
           <span style={{ fontSize: 10, color: avgColor, fontFamily: "monospace", fontWeight: 700 }}>avg: {avg}</span>
-          {target && <span style={{ fontSize: 10, color: "#555" }}>target: {target}</span>}
+          {target && <span style={{ fontSize: 10, color: "#adadad" }}>target: {target}</span>}
         </div>
       </div>
       {/* Date labels row above bars */}
       <div style={{ display: "flex", gap: 2, marginBottom: 2, overflowX: "auto" }}>
         {data.map((d, i) => (
-          <div key={i} style={{ minWidth: w, flex: "0 0 auto", textAlign: "center", fontSize: 7, color: "#555", lineHeight: 1 }}>{d.date}</div>
+          <div key={i} style={{ minWidth: w, flex: "0 0 auto", textAlign: "center", fontSize: 7, color: "#adadad", lineHeight: 1 }}>{d.date}</div>
         ))}
       </div>
       {/* Bar chart with target line */}
       <div style={{ position: "relative", height: CHART_H, overflowX: "auto" }}>
         {targetY !== null && (
-          <div style={{ position: "absolute", left: 0, right: 0, top: targetY, height: 1, background: "#555", zIndex: 2, pointerEvents: "none" }}>
-            <span style={{ position: "absolute", right: 2, top: -8, fontSize: 8, color: "#555" }}>{target}</span>
+          <div style={{ position: "absolute", left: 0, right: 0, top: targetY, height: 1, background: "#adadad", zIndex: 2, pointerEvents: "none" }}>
+            <span style={{ position: "absolute", right: 2, top: -8, fontSize: 8, color: "#adadad" }}>{target}</span>
           </div>
         )}
         <div style={{ display: "flex", alignItems: "flex-end", gap: 2, height: "100%" }}>
@@ -700,14 +699,14 @@ const TrendsView = ({ history, entries, eatenOverride, burnLog, magSupp, userId,
         <div style={{ ...s.cardLabel, display: 'flex', alignItems: 'center', gap: 6 }}>All-time Summary ({trendData.length} days tracked) <InfoButton topic="trends" /></div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
           <div style={{ background: "#111", borderRadius: 8, padding: "8px 12px" }}>
-            <div style={{ fontSize: 10, color: "#666" }}>Total deficit</div>
+            <div style={{ fontSize: 10, color: "#b6b6b6" }}>Total deficit</div>
             <div style={{ fontSize: 18, fontWeight: 800, fontFamily: "monospace", color: cumDef >= 0 ? "#7ec8a4" : "#ff6b6b" }}>{cumDef >= 0 ? "+" : ""}{Math.round(cumDef)}</div>
-            <div style={{ fontSize: 10, color: "#555" }}>≈ {(cumDef / 7700).toFixed(2)} kg fat</div>
+            <div style={{ fontSize: 10, color: "#adadad" }}>≈ {(cumDef / 7700).toFixed(2)} kg fat</div>
           </div>
           <div style={{ background: "#111", borderRadius: 8, padding: "8px 12px" }}>
-            <div style={{ fontSize: 10, color: "#666" }}>Avg daily eaten</div>
+            <div style={{ fontSize: 10, color: "#b6b6b6" }}>Avg daily eaten</div>
             <div style={{ fontSize: 18, fontWeight: 800, fontFamily: "monospace", color: "#c9a96e" }}>{avgEaten}</div>
-            <div style={{ fontSize: 10, color: "#555" }}>kcal/day</div>
+            <div style={{ fontSize: 10, color: "#adadad" }}>kcal/day</div>
           </div>
         </div>
       </div>
@@ -720,7 +719,7 @@ const TrendsView = ({ history, entries, eatenOverride, burnLog, magSupp, userId,
       <div style={{ display: "flex", gap: 4, marginBottom: 12 }}>
         {ranges.map(r => (
           <button key={r} onClick={() => setTrendRange(r)}
-            style={{ flex: 1, padding: "5px 0", borderRadius: 8, border: `1px solid ${trendRange === r ? "#c9a96e" : "#2a2a2a"}`, background: trendRange === r ? "#2a1e0a" : "transparent", color: trendRange === r ? "#c9a96e" : "#555", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>
+            style={{ flex: 1, padding: "5px 0", borderRadius: 8, border: `1px solid ${trendRange === r ? "#c9a96e" : "#2a2a2a"}`, background: trendRange === r ? "#2a1e0a" : "transparent", color: trendRange === r ? "#c9a96e" : "#adadad", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>
             {r === "All" ? "All" : `${r}d`}
           </button>
         ))}
@@ -780,7 +779,7 @@ const TrendsView = ({ history, entries, eatenOverride, burnLog, magSupp, userId,
 
         if (!hasGlucose && !hasKetone && !hasBP) {
           return (
-            <div style={{ ...s.card, margin: "0", textAlign: "center", color: "#555", padding: "30px 0", fontSize: 13 }}>
+            <div style={{ ...s.card, margin: "0", textAlign: "center", color: "#adadad", padding: "30px 0", fontSize: 13 }}>
               No readings logged yet — log glucose, ketone or blood pressure readings in the Readings tab to see trends here.
             </div>
           );
@@ -864,7 +863,6 @@ function UserTracker({ userId, profile, profiles, session }) {
   const [quickLogging, setQuickLogging] = useState(false);
   const [quickLogResults, setQuickLogResults] = useState(null);
   const [quickLogError, setQuickLogError] = useState("");
-  const [quickLogMode, setQuickLogMode] = useState("casual");
   const [quickLogSave, setQuickLogSave] = useState({});
   const [fabHidden, setFabHidden] = useState(false);
 
@@ -1295,22 +1293,20 @@ function UserTracker({ userId, profile, profiles, session }) {
     setQuickLogging(false);
   };
 
-  const addAllQuickLog = (items, mode) => {
-    const useAdj = (mode || quickLogMode) === "casual";
-    const bias = useAdj ? 1 + ((profile?.quickLogBias ?? 15) / 100) : 1;
+  const addAllQuickLog = (items) => {
     const newEntries = items.map(item => ({
       ...item,
       id: "ql_" + Date.now() + Math.random(),
-      calories: Math.round((item.calories || 0) * bias),
-      fat: Math.round((item.fat || 0) * bias * 10) / 10,
-      protein: Math.round((item.protein || 0) * bias * 10) / 10,
-      carbs: Math.round((item.carbs || 0) * bias * 10) / 10,
-      fiber: Math.round((item.fiber || 0) * bias * 10) / 10,
-      sodium: Math.round((item.sodium || 0) * bias),
-      calcium: Math.round((item.calcium || 0) * bias),
-      magnesium: Math.round((item.magnesium || 0) * bias),
-      potassium: Math.round((item.potassium || 0) * bias),
-      name: useAdj ? item.name + " (est)" : item.name,
+      calories: Math.round(item.calories || 0),
+      fat: Math.round((item.fat || 0) * 10) / 10,
+      protein: Math.round((item.protein || 0) * 10) / 10,
+      carbs: Math.round((item.carbs || 0) * 10) / 10,
+      fiber: Math.round((item.fiber || 0) * 10) / 10,
+      sodium: Math.round(item.sodium || 0),
+      calcium: Math.round(item.calcium || 0),
+      magnesium: Math.round(item.magnesium || 0),
+      potassium: Math.round(item.potassium || 0),
+      name: item.name + " (est)",
     }));
     setEntries(prev => [...prev, ...newEntries]);
     setQuickLogResults(null);
@@ -1345,10 +1341,10 @@ function UserTracker({ userId, profile, profiles, session }) {
 
   const s = {
     card: { margin: "12px 16px 0", background: "#1a1a1a", borderRadius: 16, padding: "14px 18px", border: "1px solid #2a2a2a" },
-    cardLabel: { fontSize: 11, color: "#888", letterSpacing: 1, textTransform: "uppercase", marginBottom: 10 },
+    cardLabel: { fontSize: 11, color: "#c2c2c2", letterSpacing: 1, textTransform: "uppercase", marginBottom: 10 },
     tabs: { display: "flex", gap: 8, padding: "14px 16px 0" },
-    tabBtn: (a) => ({ flex: 1, padding: "8px 0", borderRadius: 10, border: "none", background: a ? "#c9a96e" : "#1e1e1e", color: a ? "#111" : "#888", fontWeight: 700, fontSize: 12, cursor: "pointer" }),
-    subTab: (a) => ({ flex: 1, padding: "6px 0", borderRadius: 8, border: `1px solid ${a ? "#c9a96e" : "#2a2a2a"}`, background: a ? "#2a1e0a" : "transparent", color: a ? "#c9a96e" : "#666", fontWeight: 600, fontSize: 12, cursor: "pointer" }),
+    tabBtn: (a) => ({ flex: 1, padding: "8px 0", borderRadius: 10, border: "none", background: a ? "#c9a96e" : "#1e1e1e", color: a ? "#111" : "#c2c2c2", fontWeight: 700, fontSize: 12, cursor: "pointer" }),
+    subTab: (a) => ({ flex: 1, padding: "6px 0", borderRadius: 8, border: `1px solid ${a ? "#c9a96e" : "#2a2a2a"}`, background: a ? "#2a1e0a" : "transparent", color: a ? "#c9a96e" : "#b6b6b6", fontWeight: 600, fontSize: 12, cursor: "pointer" }),
     section: { padding: "12px 16px 0" },
     input: { width: "100%", background: "#1e1e1e", border: "1px solid #333", borderRadius: 10, padding: "10px 14px", color: "#f0ede8", fontSize: 14, outline: "none", boxSizing: "border-box", marginBottom: 8 },
     btn: (bg, fg) => ({ background: bg || "#c9a96e", border: "none", borderRadius: 10, padding: "10px 18px", color: fg || (bg ? "#fff" : "#111"), fontWeight: 800, fontSize: 13, cursor: "pointer" }),
@@ -1385,7 +1381,7 @@ function UserTracker({ userId, profile, profiles, session }) {
                 <input type="number" placeholder={String(yesterdayBurn)} value={burnDraft} onChange={e => setBurnDraft(e.target.value)}
                   style={{ ...s.input, marginBottom: 0, flex: 1 }} />
                 <button onClick={() => saveBurn(yesterdayKey(), burnDraft)} style={s.btn()}>✓</button>
-                <button onClick={() => { setBurnEditDay(""); setBurnDraft(""); }} style={{ ...s.btn("#222", "#888") }}>✕</button>
+                <button onClick={() => { setBurnEditDay(""); setBurnDraft(""); }} style={{ ...s.btn("#222", "#c2c2c2") }}>✕</button>
               </div>
             </div>
           ) : (
@@ -1405,25 +1401,25 @@ function UserTracker({ userId, profile, profiles, session }) {
         <div style={s.cardLabel}>Today's Energy</div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, textAlign: "center" }}>
           <div>
-            <div style={{ fontSize: 11, color: "#888", marginBottom: 4 }}>Eaten</div>
+            <div style={{ fontSize: 11, color: "#c2c2c2", marginBottom: 4 }}>Eaten</div>
             <div style={{ ...s.bigNum(), fontSize: 24 }}>{Math.round(totals.calories)}</div>
-            <div style={{ fontSize: 10, color: "#666" }}>kcal</div>
+            <div style={{ fontSize: 10, color: "#b6b6b6" }}>kcal</div>
             {biasActive && <div style={{ fontSize: 9, color: "#c9a96e", marginTop: 2 }}>±{profile.loggingBias}% adj</div>}
           </div>
           <div>
-            <div style={{ fontSize: 11, color: "#888", marginBottom: 4 }}>Yesterday burned</div>
+            <div style={{ fontSize: 11, color: "#c2c2c2", marginBottom: 4 }}>Yesterday burned</div>
             {yesterdayBurn
-              ? <><div style={{ ...s.bigNum("#7ec8a4"), fontSize: 24 }}>{yesterdayBurn}</div><div style={{ fontSize: 10, color: "#666" }}>kcal</div></>
-              : <div style={{ fontSize: 11, color: "#555", marginTop: 6 }}>—</div>}
+              ? <><div style={{ ...s.bigNum("#7ec8a4"), fontSize: 24 }}>{yesterdayBurn}</div><div style={{ fontSize: 10, color: "#b6b6b6" }}>kcal</div></>
+              : <div style={{ fontSize: 11, color: "#adadad", marginTop: 6 }}>—</div>}
           </div>
           <div>
-            <div style={{ fontSize: 11, color: "#888", marginBottom: 4, display: "flex", alignItems: "center", gap: 4 }}>Yesterday deficit <InfoButton topic="deficit" /></div>
+            <div style={{ fontSize: 11, color: "#c2c2c2", marginBottom: 4, display: "flex", alignItems: "center", gap: 4 }}>Yesterday deficit <InfoButton topic="deficit" /></div>
             {yesterdayBurn ? (() => {
               const yTracked = (history[yesterdayKey()] || []).reduce((a, e) => a + (e.calories || 0), 0);
               const yEaten = eatenOverride[yesterdayKey()] ?? yTracked;
               const yDef = yesterdayBurn - yEaten;
-              return <><div style={{ ...s.bigNum(yDef >= 0 ? "#7ec8a4" : "#ff6b6b"), fontSize: 24 }}>{yDef >= 0 ? "+" : ""}{Math.round(yDef)}</div><div style={{ fontSize: 10, color: "#666" }}>kcal</div></>;
-            })() : <div style={{ fontSize: 11, color: "#555", marginTop: 6 }}>—</div>}
+              return <><div style={{ ...s.bigNum(yDef >= 0 ? "#7ec8a4" : "#ff6b6b"), fontSize: 24 }}>{yDef >= 0 ? "+" : ""}{Math.round(yDef)}</div><div style={{ fontSize: 10, color: "#b6b6b6" }}>kcal</div></>;
+            })() : <div style={{ fontSize: 11, color: "#adadad", marginTop: 6 }}>—</div>}
           </div>
         </div>
       </div>
@@ -1467,7 +1463,7 @@ function UserTracker({ userId, profile, profiles, session }) {
                     </div>
                   )}
                   <span style={{ fontSize: 11, fontFamily: "monospace", color: over ? "#ff4444" : "#aaa" }}>
-                    {Math.round(mineralTotals[key])}<span style={{ color: "#555" }}>/{MINERAL_TARGETS[key]}mg</span>
+                    {Math.round(mineralTotals[key])}<span style={{ color: "#adadad" }}>/{MINERAL_TARGETS[key]}mg</span>
                   </span>
                 </div>
               </div>
@@ -1487,7 +1483,7 @@ function UserTracker({ userId, profile, profiles, session }) {
             {showDataModal === "export" ? (
               <>
                 <div style={{ fontSize: 14, fontWeight: 700, color: "#f0ede8", marginBottom: 8 }}>📤 Export Your Data</div>
-                <div style={{ fontSize: 11, color: "#888", marginBottom: 10 }}>Copy this text and save it somewhere safe. Use Import to restore it in any new tracker instance.</div>
+                <div style={{ fontSize: 11, color: "#c2c2c2", marginBottom: 10 }}>Copy this text and save it somewhere safe. Use Import to restore it in any new tracker instance.</div>
                 <textarea readOnly value={exportText}
                   onFocus={e => e.target.select()}
                   style={{ flex: 1, background: "#111", border: "1px solid #333", borderRadius: 8, padding: 10, color: "#7ec8a4", fontSize: 9, fontFamily: "monospace", resize: "none", minHeight: 150, userSelect: "all", WebkitUserSelect: "all" }} />
@@ -1503,12 +1499,12 @@ function UserTracker({ userId, profile, profiles, session }) {
                   style={{ marginTop: 6, background: "#c9a96e", border: "none", borderRadius: 8, padding: "10px 0", color: "#111", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>
                   {copySuccess ? "✓ Copied!" : "📋 Copy to Clipboard"}
                 </button>
-                <button onClick={() => setShowDataModal(null)} style={{ marginTop: 8, background: "none", border: "1px solid #333", borderRadius: 8, padding: "8px 0", color: "#888", fontSize: 12, cursor: "pointer" }}>Close</button>
+                <button onClick={() => setShowDataModal(null)} style={{ marginTop: 8, background: "none", border: "1px solid #333", borderRadius: 8, padding: "8px 0", color: "#c2c2c2", fontSize: 12, cursor: "pointer" }}>Close</button>
               </>
             ) : (
               <>
                 <div style={{ fontSize: 14, fontWeight: 700, color: "#f0ede8", marginBottom: 8 }}>📥 Import Your Data</div>
-                <div style={{ fontSize: 11, color: "#888", marginBottom: 10 }}>Attach your backup JSON file to restore all food logs, history and settings.</div>
+                <div style={{ fontSize: 11, color: "#c2c2c2", marginBottom: 10 }}>Attach your backup JSON file to restore all food logs, history and settings.</div>
                 <input type="file" accept=".json,application/json"
                   onChange={e => {
                     const file = e.target.files[0];
@@ -1517,17 +1513,17 @@ function UserTracker({ userId, profile, profiles, session }) {
                     reader.onload = ev => setImportText(ev.target.result);
                     reader.readAsText(file);
                   }}
-                  style={{ marginBottom: 10, color: "#888", fontSize: 12 }} />
+                  style={{ marginBottom: 10, color: "#c2c2c2", fontSize: 12 }} />
                 {importText && <div style={{ fontSize: 11, color: "#7ec8a4", marginBottom: 8 }}>✓ File loaded — ready to restore</div>}
-                <div style={{ fontSize: 11, color: "#555", marginBottom: 10 }}>Or paste the JSON text directly:</div>
+                <div style={{ fontSize: 11, color: "#adadad", marginBottom: 10 }}>Or paste the JSON text directly:</div>
                 <textarea value={importText} onChange={e => setImportText(e.target.value)}
                   placeholder="Paste exported JSON here..."
                   style={{ flex: 1, background: "#111", border: "1px solid #333", borderRadius: 8, padding: 10, color: "#7ec8a4", fontSize: 9, fontFamily: "monospace", resize: "none", minHeight: 100 }} />
                 <button onClick={() => importData(importText)} disabled={!importText}
-                  style={{ marginTop: 10, background: importText ? "#7ec8a4" : "#333", border: "none", borderRadius: 8, padding: "10px 0", color: importText ? "#111" : "#666", fontWeight: 800, fontSize: 13, cursor: importText ? "pointer" : "default" }}>
+                  style={{ marginTop: 10, background: importText ? "#7ec8a4" : "#333", border: "none", borderRadius: 8, padding: "10px 0", color: importText ? "#111" : "#b6b6b6", fontWeight: 800, fontSize: 13, cursor: importText ? "pointer" : "default" }}>
                   📥 Import & Restore
                 </button>
-                <button onClick={() => setShowDataModal(null)} style={{ marginTop: 8, background: "none", border: "1px solid #333", borderRadius: 8, padding: "8px 0", color: "#888", fontSize: 12, cursor: "pointer" }}>Cancel</button>
+                <button onClick={() => setShowDataModal(null)} style={{ marginTop: 8, background: "none", border: "1px solid #333", borderRadius: 8, padding: "8px 0", color: "#c2c2c2", fontSize: 12, cursor: "pointer" }}>Cancel</button>
               </>
             )}
           </div>
@@ -1584,7 +1580,7 @@ function UserTracker({ userId, profile, profiles, session }) {
             </div>
           )}
           {entries.length === 0
-            ? <div style={{ textAlign: "center", color: "#555", padding: "30px 0", fontSize: 13 }}>No food logged yet today</div>
+            ? <div style={{ textAlign: "center", color: "#adadad", padding: "30px 0", fontSize: 13 }}>No food logged yet today</div>
             : entries.map(e => {
               const baseName = (n) => n.replace(/\s*\([^)]*\)/g, '').replace(/\s*×[\d.]+/g, '').trim().toLowerCase();
               const alreadySaved = myFoods.some(f => baseName(f.name) === baseName(e.name) || f.name === e.name);
@@ -1605,14 +1601,14 @@ function UserTracker({ userId, profile, profiles, session }) {
                         {e.name.split(/(\s[\d.]+(?:g|ml)|\s×[\d.]+)(?=\)?$)/)[0]}
                         {(() => { const m = e.name.match(/(\s[\d.]+(?:g|ml)|\s×[\d.]+)\)?$/); return m ? <span style={{ color: "#c9a96e", fontSize: 11, fontWeight: 700 }}> {m[0].trim()}</span> : null; })()}
                       </div>
-                      <div style={{ fontSize: 11, color: "#777" }}>F:{e.fat}g · P:{e.protein}g · NC:{Math.max(0, (e.carbs || 0) - (e.fiber || 0)).toFixed(1)}g</div>
+                      <div style={{ fontSize: 11, color: "#bcbcbc" }}>F:{e.fat}g · P:{e.protein}g · NC:{Math.max(0, (e.carbs || 0) - (e.fiber || 0)).toFixed(1)}g</div>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <div style={{ textAlign: "right" }}>
                         <div style={{ fontSize: 14, fontWeight: 700, color: "#c9a96e" }}>{e.calories}</div>
-                        <div style={{ fontSize: 10, color: "#555" }}>kcal</div>
+                        <div style={{ fontSize: 10, color: "#adadad" }}>kcal</div>
                       </div>
-                      <span style={{ fontSize: 11, color: "#555" }}>{isExpanded ? "▲" : "▼"}</span>
+                      <span style={{ fontSize: 11, color: "#adadad" }}>{isExpanded ? "▲" : "▼"}</span>
                       <button
                         onClick={ev => { ev.stopPropagation(); !alreadySaved && saveToMyFoods(e); }}
                         title={alreadySaved ? "Already in My Foods" : "Save to My Foods"}
@@ -1633,13 +1629,13 @@ function UserTracker({ userId, profile, profiles, session }) {
                           { label: "Fiber", val: e.fiber, unit: "g", color: "#7ec8a4" },
                         ].map(({ label, val, unit, color }) => (
                           <div key={label} style={{ fontSize: 12 }}>
-                            <span style={{ color: "#666" }}>{label}: </span>
+                            <span style={{ color: "#b6b6b6" }}>{label}: </span>
                             <span style={{ color, fontWeight: 700 }}>{val}{unit}</span>
                           </div>
                         ))}
                       </div>
                       <div style={{ borderTop: "1px solid #222", paddingTop: 8 }}>
-                        <div style={{ fontSize: 10, color: "#666", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>Minerals</div>
+                        <div style={{ fontSize: 10, color: "#b6b6b6", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>Minerals</div>
                         {[
                           { label: "Sodium", val: e.sodium, color: MINERAL_COLORS.sodium, target: MINERAL_TARGETS.sodium },
                           { label: "Calcium", val: e.calcium, color: MINERAL_COLORS.calcium, target: MINERAL_TARGETS.calcium },
@@ -1652,7 +1648,7 @@ function UserTracker({ userId, profile, profiles, session }) {
                             <div key={label} style={{ marginBottom: 7 }}>
                               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
                                 <span style={{ fontSize: 11, color: "#aaa" }}>{label}</span>
-                                <span style={{ fontSize: 11, fontFamily: "monospace", color: over ? "#ff4444" : "#888" }}>
+                                <span style={{ fontSize: 11, fontFamily: "monospace", color: over ? "#ff4444" : "#c2c2c2" }}>
                                   {Math.round(val || 0)}mg <span style={{ color: "#444" }}>({Math.round(pct)}% of daily)</span>
                                 </span>
                               </div>
@@ -1694,7 +1690,7 @@ function UserTracker({ userId, profile, profiles, session }) {
                 <input placeholder="Search all foods…" value={search} onChange={e => setSearch(e.target.value)} style={s.input} />
                 {filtered.length === 0
                   ? <div style={{ textAlign: "center", padding: "20px 0" }}>
-                      <div style={{ color: "#555", fontSize: 13, marginBottom: 12 }}>No foods found for "{search}"</div>
+                      <div style={{ color: "#adadad", fontSize: 13, marginBottom: 12 }}>No foods found for "{search}"</div>
                       <button onClick={() => {
                         setAddSubTab("ai");
                         setAnalyzeText(search);
@@ -1724,12 +1720,12 @@ function UserTracker({ userId, profile, profiles, session }) {
                     <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
                       <label style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, background: "#1a1a1a", border: "1px dashed #333", borderRadius: 10, padding: "10px 8px", cursor: "pointer" }}>
                         <span style={{ fontSize: 18 }}>📷</span>
-                        <span style={{ fontSize: 11, color: "#888" }}>Camera</span>
+                        <span style={{ fontSize: 11, color: "#c2c2c2" }}>Camera</span>
                         <input type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={e => handleImageFile(e.target.files[0])} />
                       </label>
                       <label style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, background: "#1a1a1a", border: "1px dashed #333", borderRadius: 10, padding: "10px 8px", cursor: "pointer" }}>
                         <span style={{ fontSize: 18 }}>🖼️</span>
-                        <span style={{ fontSize: 11, color: "#888" }}>Gallery</span>
+                        <span style={{ fontSize: 11, color: "#c2c2c2" }}>Gallery</span>
                         <input type="file" accept="image/*" style={{ display: "none" }} onChange={e => handleImageFile(e.target.files[0])} />
                       </label>
                     </div>
@@ -1752,11 +1748,11 @@ function UserTracker({ userId, profile, profiles, session }) {
                 <div>
                   <div style={{ ...s.card, margin: "0 0 10px" }}>
                     <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>{analyzeResult.name}</div>
-                    {analyzeNote && <div style={{ fontSize: 11, color: "#888", marginBottom: 10, fontStyle: "italic" }}>{analyzeNote}</div>}
+                    {analyzeNote && <div style={{ fontSize: 11, color: "#c2c2c2", marginBottom: 10, fontStyle: "italic" }}>{analyzeNote}</div>}
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, fontSize: 12 }}>
                       {["calories", "fat", "protein", "carbs", "fiber", "sodium", "calcium", "magnesium", "potassium"].map(k => (
                         <div key={k} style={{ background: "#111", borderRadius: 8, padding: "6px 10px" }}>
-                          <span style={{ color: "#666", textTransform: "capitalize" }}>{k}: </span>
+                          <span style={{ color: "#b6b6b6", textTransform: "capitalize" }}>{k}: </span>
                           <span style={{ color: "#c9a96e", fontWeight: 700 }}>{analyzeResult[k]}{k === "calories" ? "" : k === "sodium" || k === "calcium" || k === "magnesium" || k === "potassium" ? "mg" : "g"}</span>
                         </div>
                       ))}
@@ -1767,7 +1763,7 @@ function UserTracker({ userId, profile, profiles, session }) {
                         {savingToMyFoods ? "✓ Saved!" : "💾 Save to My Foods"}
                       </button>
                     </div>
-                    <button onClick={resetAnalyze} style={{ ...s.btn("#1e1e1e", "#888"), width: "100%", marginTop: 8, border: "1px solid #333" }}>← Back</button>
+                    <button onClick={resetAnalyze} style={{ ...s.btn("#1e1e1e", "#c2c2c2"), width: "100%", marginTop: 8, border: "1px solid #333" }}>← Back</button>
                   </div>
                 </div>
               )}
@@ -1784,15 +1780,15 @@ function UserTracker({ userId, profile, profiles, session }) {
         const unitLabel = unit === "mgdl" ? "mg/dL" : "mmol/L";
 
         const glucoseColor = (v) => {
-          if (!v) return "#555";
+          if (!v) return "#adadad";
           if (v < 3.9) return "#f4d06f"; // low
           if (v <= 5.5) return "#7ec8a4"; // normal fasting
           if (v <= 7.8) return "#c9a96e"; // elevated
           return "#ff4444"; // high
         };
         const ketoneColor = (v) => {
-          if (!v) return "#555";
-          if (v < 0.5) return "#555"; // not in ketosis
+          if (!v) return "#adadad";
+          if (v < 0.5) return "#adadad"; // not in ketosis
           if (v < 1.5) return "#7ec8e3"; // light
           if (v < 3.0) return "#7ec8a4"; // nutritional ketosis
           if (v < 5.0) return "#c9a96e"; // deep
@@ -1816,14 +1812,14 @@ function UserTracker({ userId, profile, profiles, session }) {
               <div style={{ ...s.cardLabel, display: "flex", alignItems: "center", gap: 6 }}>Log a Reading <InfoButton topic="readings" /></div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
                 <div>
-                  <div style={{ fontSize: 10, color: "#888", marginBottom: 4 }}>Glucose ({unitLabel})</div>
+                  <div style={{ fontSize: 10, color: "#c2c2c2", marginBottom: 4 }}>Glucose ({unitLabel})</div>
                   <input type="number" step="0.1" placeholder={unit === "mgdl" ? "e.g. 95" : "e.g. 5.2"}
                     value={readingForm.glucose}
                     onChange={e => setReadingForm(p => ({ ...p, glucose: e.target.value }))}
                     style={{ ...s.input, marginBottom: 0 }} />
                 </div>
                 <div>
-                  <div style={{ fontSize: 10, color: "#888", marginBottom: 4 }}>Ketones (mmol/L)</div>
+                  <div style={{ fontSize: 10, color: "#c2c2c2", marginBottom: 4 }}>Ketones (mmol/L)</div>
                   <input type="number" step="0.1" placeholder="e.g. 1.2"
                     value={readingForm.ketone}
                     onChange={e => setReadingForm(p => ({ ...p, ketone: e.target.value }))}
@@ -1837,7 +1833,7 @@ function UserTracker({ userId, profile, profiles, session }) {
                     style={{ ...s.input, marginBottom: 0 }} />
                 </div>
                 <div>
-                  <div style={{ fontSize: 10, color: "#888", marginBottom: 4 }}>BP Diastolic (mmHg)</div>
+                  <div style={{ fontSize: 10, color: "#c2c2c2", marginBottom: 4 }}>BP Diastolic (mmHg)</div>
                   <input type="number" placeholder="e.g. 80"
                     value={readingForm.bpDiastolic}
                     onChange={e => setReadingForm(p => ({ ...p, bpDiastolic: e.target.value }))}
@@ -1854,7 +1850,7 @@ function UserTracker({ userId, profile, profiles, session }) {
             {/* Reference ranges */}
             <div style={{ ...s.card, margin: "0 0 12px", background: "#161616" }}>
               <div style={s.cardLabel}>Reference Ranges</div>
-              <div style={{ fontSize: 11, color: "#888", lineHeight: 1.8 }}>
+              <div style={{ fontSize: 11, color: "#c2c2c2", lineHeight: 1.8 }}>
                 <div>🟢 Glucose fasting: {unit === "mgdl" ? "72–99 mg/dL" : "4.0–5.5 mmol/L"}</div>
                 <div>🟢 Glucose 2hr post meal: {unit === "mgdl" ? "under 140 mg/dL" : "under 7.8 mmol/L"}</div>
                 <div>🟢 Ketones (nutritional ketosis): 0.5–3.0 mmol/L</div>
@@ -1866,12 +1862,12 @@ function UserTracker({ userId, profile, profiles, session }) {
 
             {/* Today's readings */}
             {readings.length === 0
-              ? <div style={{ textAlign: "center", color: "#555", padding: "30px 0", fontSize: 13 }}>No readings logged today</div>
+              ? <div style={{ textAlign: "center", color: "#adadad", padding: "30px 0", fontSize: 13 }}>No readings logged today</div>
               : readings.map(r => (
                 <div key={r.id} style={{ ...s.card, margin: "0 0 8px", padding: "12px 16px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                    <span style={{ fontSize: 12, color: "#555" }}>{r.time}</span>
-                    {r.note && <span style={{ fontSize: 11, color: "#888", fontStyle: "italic" }}>{r.note}</span>}
+                    <span style={{ fontSize: 12, color: "#adadad" }}>{r.time}</span>
+                    {r.note && <span style={{ fontSize: 11, color: "#c2c2c2", fontStyle: "italic" }}>{r.note}</span>}
                     <button onClick={() => setReadings(prev => prev.filter(x => x.id !== r.id))}
                       style={{ background: "none", border: "none", color: "#444", cursor: "pointer", fontSize: 15 }}>×</button>
                   </div>
@@ -1900,7 +1896,7 @@ function UserTracker({ userId, profile, profiles, session }) {
                   <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
                     {r.glucose && (
                       <div>
-                        <div style={{ fontSize: 10, color: "#888" }}>Glucose</div>
+                        <div style={{ fontSize: 10, color: "#c2c2c2" }}>Glucose</div>
                         <div style={{ fontSize: 20, fontWeight: 800, fontFamily: "monospace", color: glucoseColor(r.glucose) }}>
                           {toDisplay(r.glucose)}
                           <span style={{ fontSize: 11, fontWeight: 400, marginLeft: 2 }}>{unitLabel}</span>
@@ -1909,7 +1905,7 @@ function UserTracker({ userId, profile, profiles, session }) {
                     )}
                     {r.ketone && (
                       <div>
-                        <div style={{ fontSize: 10, color: "#888" }}>Ketones</div>
+                        <div style={{ fontSize: 10, color: "#c2c2c2" }}>Ketones</div>
                         <div style={{ fontSize: 20, fontWeight: 800, fontFamily: "monospace", color: ketoneColor(r.ketone) }}>
                           {r.ketone}
                           <span style={{ fontSize: 11, fontWeight: 400, marginLeft: 2 }}>mmol/L</span>
@@ -1919,7 +1915,7 @@ function UserTracker({ userId, profile, profiles, session }) {
                     )}
                     {r.bpSystolic && (
                       <div>
-                        <div style={{ fontSize: 10, color: "#888" }}>Blood Pressure</div>
+                        <div style={{ fontSize: 10, color: "#c2c2c2" }}>Blood Pressure</div>
                         <div style={{ fontSize: 20, fontWeight: 800, fontFamily: "monospace", color: r.bpSystolic > 140 ? "#ff4444" : r.bpSystolic > 130 ? "#c9a96e" : "#7ec8a4" }}>
                           {r.bpSystolic}{r.bpDiastolic ? `/${r.bpDiastolic}` : ""}
                           <span style={{ fontSize: 11, fontWeight: 400, marginLeft: 2 }}>mmHg</span>
@@ -1942,7 +1938,7 @@ function UserTracker({ userId, profile, profiles, session }) {
               if (!pastKeys.length) return null;
               return (
                 <div style={{ marginTop: 16 }}>
-                  <div style={{ fontSize: 11, color: "#555", letterSpacing: 1, textTransform: "uppercase", marginBottom: 8, paddingLeft: 2 }}>Past Readings</div>
+                  <div style={{ fontSize: 11, color: "#adadad", letterSpacing: 1, textTransform: "uppercase", marginBottom: 8, paddingLeft: 2 }}>Past Readings</div>
                   {pastKeys.map(dateKey => {
                     const dayReadings = readingsHistory[dateKey] || [];
                     const [, m, d] = dateKey.split("-");
@@ -1951,11 +1947,11 @@ function UserTracker({ userId, profile, profiles, session }) {
                         <div style={{ fontSize: 11, color: "#c9a96e", fontWeight: 700, marginBottom: 6 }}>{d}/{m}</div>
                         {dayReadings.map((r, i) => (
                           <div key={i} style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center", marginBottom: i < dayReadings.length - 1 ? 8 : 0, paddingBottom: i < dayReadings.length - 1 ? 8 : 0, borderBottom: i < dayReadings.length - 1 ? "1px solid #222" : "none" }}>
-                            <span style={{ fontSize: 10, color: "#555", minWidth: 36 }}>{r.time}</span>
+                            <span style={{ fontSize: 10, color: "#adadad", minWidth: 36 }}>{r.time}</span>
                             {r.glucose && <span style={{ fontSize: 12, fontFamily: "monospace", color: glucoseColor(r.glucose) }}>G: {toDisplay(r.glucose)} {unitLabel}</span>}
                             {r.ketone && <span style={{ fontSize: 12, fontFamily: "monospace", color: ketoneColor(r.ketone) }}>K: {r.ketone} mmol/L</span>}
                             {r.bpSystolic && <span style={{ fontSize: 12, fontFamily: "monospace", color: r.bpSystolic > 140 ? "#ff4444" : r.bpSystolic > 130 ? "#c9a96e" : "#7ec8a4" }}>BP: {r.bpSystolic}{r.bpDiastolic ? `/${r.bpDiastolic}` : ""}</span>}
-                            {r.note && <span style={{ fontSize: 10, color: "#666", fontStyle: "italic" }}>{r.note}</span>}
+                            {r.note && <span style={{ fontSize: 10, color: "#b6b6b6", fontStyle: "italic" }}>{r.note}</span>}
                           </div>
                         ))}
                       </div>
@@ -1973,24 +1969,8 @@ function UserTracker({ userId, profile, profiles, session }) {
         <div style={s.section}>
           {!quickLogResults ? (
             <>
-              {/* Mode toggle */}
-              <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
-                <button onClick={() => setQuickLogMode("casual")}
-                  style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: `1px solid ${quickLogMode === "casual" ? "#c9a96e" : "#2a2a2a"}`, background: quickLogMode === "casual" ? "#2a1e0a" : "transparent", color: quickLogMode === "casual" ? "#c9a96e" : "#666", fontWeight: 600, fontSize: 12, cursor: "pointer" }}>
-                  🗣 Casual (+{profile?.quickLogBias ?? 15}% adj)
-                </button>
-                <button onClick={() => setQuickLogMode("exact")}
-                  style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: `1px solid ${quickLogMode === "exact" ? "#7ec8e3" : "#2a2a2a"}`, background: quickLogMode === "exact" ? "#0a1a2a" : "transparent", color: quickLogMode === "exact" ? "#7ec8e3" : "#666", fontWeight: 600, fontSize: 12, cursor: "pointer" }}>
-                  ⚖️ Exact weights (no adj)
-                </button>
-              </div>
-              <div style={{ fontSize: 11, color: quickLogMode === "casual" ? "#c9a96e" : "#7ec8e3", marginBottom: 8, lineHeight: 1.4 }}>
-                {quickLogMode === "casual"
-                  ? "Describe meals naturally — AI estimates portions and adds your accuracy adjustment."
-                  : "Include exact weights (e.g. '10g pumpkin seeds, 150g yogurt') — AI looks up values, no adjustment applied."}
-              </div>
               <textarea
-                placeholder={quickLogMode === "casual" ? "e.g. 'For breakfast I had two scrambled eggs with cheese. Lunch was a salad with tuna and olive oil. Snacked on some almonds. Dinner was grilled chicken with tahini sauce.'" : "e.g. '10g pumpkin seeds, 150g Greek yogurt, 2 eggs, 200ml smoothie, 30g walnuts'"}
+                placeholder={"e.g. 'Two scrambled eggs with cheese, a salad with tuna and olive oil, 30g almonds, 150g Greek yogurt'"}
                 value={quickLogText}
                 onChange={e => setQuickLogText(e.target.value)}
                 style={{ ...s.input, minHeight: 120, resize: "vertical", lineHeight: 1.5 }}
@@ -2002,7 +1982,7 @@ function UserTracker({ userId, profile, profiles, session }) {
                     {voiceActive ? "⏹ Stop listening" : "🎤 Speak your meal"}
                   </button>
                   <button onClick={() => setVoiceLang(l => l === "en-US" ? "he-IL" : "en-US")} disabled={voiceActive}
-                    style={{ width: 70, padding: "10px 0", borderRadius: 8, border: "1px solid #2a2a2a", background: "transparent", color: "#888", fontWeight: 600, fontSize: 13, cursor: "pointer", opacity: voiceActive ? 0.4 : 1 }}>
+                    style={{ width: 70, padding: "10px 0", borderRadius: 8, border: "1px solid #2a2a2a", background: "transparent", color: "#c2c2c2", fontWeight: 600, fontSize: 13, cursor: "pointer", opacity: voiceActive ? 0.4 : 1 }}>
                     {voiceLang === "en-US" ? "EN" : "עב"}
                   </button>
                 </div>
@@ -2015,7 +1995,7 @@ function UserTracker({ userId, profile, profiles, session }) {
             </>
           ) : (
             <div>
-              <div style={{ fontSize: 13, color: "#888", marginBottom: 12 }}>
+              <div style={{ fontSize: 13, color: "#c2c2c2", marginBottom: 12 }}>
                 Found {quickLogResults.length} items — review, star anything you'll eat again, then add:
               </div>
               {quickLogResults.map((item, i) => (
@@ -2023,43 +2003,37 @@ function UserTracker({ userId, profile, profiles, session }) {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 13, fontWeight: 600 }}>{item.name}</div>
-                      <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>F:{item.fat}g · P:{item.protein}g · NC:{Math.max(0,(item.carbs||0)-(item.fiber||0)).toFixed(1)}g</div>
+                      <div style={{ fontSize: 11, color: "#c2c2c2", marginTop: 2 }}>F:{item.fat}g · P:{item.protein}g · NC:{Math.max(0,(item.carbs||0)-(item.fiber||0)).toFixed(1)}g</div>
                       {item.note && <div style={{ fontSize: 10, color: "#7ec8a4", marginTop: 2, fontStyle: "italic" }}>{item.note}</div>}
                     </div>
                     <div style={{ textAlign: "right", marginLeft: 10 }}>
                       <div style={{ fontSize: 14, fontWeight: 700, color: "#c9a96e" }}>{item.calories}</div>
-                      <div style={{ fontSize: 10, color: "#666" }}>kcal</div>
+                      <div style={{ fontSize: 10, color: "#b6b6b6" }}>kcal</div>
                     </div>
                   </div>
                   <button onClick={() => setQuickLogSave(prev => ({ ...prev, [i]: !prev[i] }))}
-                    style={{ marginTop: 8, padding: "5px 10px", borderRadius: 6, border: `1px solid ${quickLogSave[i] ? "#2a4a2a" : "#2a2a2a"}`, background: quickLogSave[i] ? "#1a2a1a" : "transparent", color: quickLogSave[i] ? "#7ec8a4" : "#666", fontWeight: 600, fontSize: 11, cursor: "pointer" }}>
+                    style={{ marginTop: 8, padding: "5px 10px", borderRadius: 6, border: `1px solid ${quickLogSave[i] ? "#2a4a2a" : "#2a2a2a"}`, background: quickLogSave[i] ? "#1a2a1a" : "transparent", color: quickLogSave[i] ? "#7ec8a4" : "#b6b6b6", fontWeight: 600, fontSize: 11, cursor: "pointer" }}>
                     {quickLogSave[i] ? "★ Will also save to My Foods" : "☆ Also save to My Foods"}
                   </button>
                 </div>
               ))}
               <div style={{ background: "#1a1a1a", borderRadius: 10, padding: "10px 14px", marginBottom: 12, border: "1px solid #2a2a2a" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: quickLogMode === "casual" ? 4 : 0 }}>
-                  <span style={{ fontSize: 13, color: "#888" }}>{quickLogMode === "casual" ? "AI estimate" : "Total"}</span>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: quickLogMode === "casual" ? "#888" : "#c9a96e" }}>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: 13, color: "#c2c2c2" }}>Total</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: "#c9a96e" }}>
                     {quickLogResults.reduce((a, i) => a + (i.calories || 0), 0)} kcal
                   </span>
                 </div>
-                {quickLogMode === "casual" && <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ fontSize: 13, color: "#c9a96e" }}>After +{profile?.quickLogBias ?? 15}% adjustment</span>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: "#c9a96e" }}>
-                    {Math.round(quickLogResults.reduce((a, i) => a + (i.calories || 0), 0) * (1 + (profile?.quickLogBias ?? 15) / 100))} kcal
-                  </span>
-                </div>}
               </div>
               <div style={{ display: "flex", gap: 8 }}>
                 <button onClick={() => {
                   quickLogResults.forEach((item, i) => { if (quickLogSave[i]) saveToMyFoods(item, item.note || ""); });
-                  addAllQuickLog(quickLogResults, quickLogMode);
+                  addAllQuickLog(quickLogResults);
                 }} style={{ ...s.btn(), flex: 1 }}>
                   + Add All to Log{Object.values(quickLogSave).some(Boolean) ? " & Save ★" : ""}
                 </button>
                 <button onClick={() => { setQuickLogResults(null); setQuickLogText(""); }}
-                  style={{ ...s.btn("#1e1e1e", "#888"), padding: "10px 16px", border: "1px solid #333" }}>
+                  style={{ ...s.btn("#1e1e1e", "#c2c2c2"), padding: "10px 16px", border: "1px solid #333" }}>
                   ← Redo
                 </button>
               </div>
@@ -2076,7 +2050,7 @@ function UserTracker({ userId, profile, profiles, session }) {
             <div style={{ fontSize: 26, fontWeight: 800, fontFamily: "monospace", color: totalDeficit >= 0 ? "#7ec8a4" : "#ff6b6b" }}>
               {totalDeficit >= 0 ? "+" : ""}{Math.round(totalDeficit)} kcal
             </div>
-            <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>≈ {(totalDeficit / 7700).toFixed(2)} kg fat</div>
+            <div style={{ fontSize: 11, color: "#adadad", marginTop: 2 }}>≈ {(totalDeficit / 7700).toFixed(2)} kg fat</div>
           </div>
           {last7.map(day => {
             const dayEntries = day.isToday ? entries : (history[day.key] || []);
@@ -2087,16 +2061,16 @@ function UserTracker({ userId, profile, profiles, session }) {
                 onClick={() => setExpandedHistoryDay(isExpanded ? null : day.key)}>
                 <div>
                   <span style={{ fontWeight: 700, fontSize: 14, color: day.isToday ? "#c9a96e" : "#f0ede8" }}>{day.isToday ? "Today" : day.date}</span>
-                  {day.hasOverride && <span style={{ fontSize: 9, color: "#888", marginLeft: 6 }}>manual</span>}
+                  {day.hasOverride && <span style={{ fontSize: 9, color: "#c2c2c2", marginLeft: 6 }}>manual</span>}
                 </div>
                 <div style={{ display: "flex", gap: 14, fontSize: 12, color: "#aaa", alignItems: "center" }}>
                   <span>🍽 {Math.round(day.eaten)}</span>
                   {day.burn ? <span>🔥 {day.burn}</span> : <span style={{ color: "#444" }}>🔥 —</span>}
                   {day.def !== null && <span style={{ color: day.def >= 0 ? "#7ec8a4" : "#ff6b6b", fontWeight: 700 }}>{day.def >= 0 ? "+" : ""}{Math.round(day.def)}</span>}
-                  <span style={{ fontSize: 11, color: "#555" }}>{isExpanded ? "▲" : "▼"}</span>
+                  <span style={{ fontSize: 11, color: "#adadad" }}>{isExpanded ? "▲" : "▼"}</span>
                 </div>
               </div>
-              <div style={{ fontSize: 11, color: "#555" }}>NC: {day.nc.toFixed(1)}g</div>
+              <div style={{ fontSize: 11, color: "#adadad" }}>NC: {day.nc.toFixed(1)}g</div>
               {isExpanded && (
                 <div style={{ marginTop: 10, borderTop: "1px solid #222", paddingTop: 10 }}>
                   {dayEntries.length === 0
@@ -2105,7 +2079,7 @@ function UserTracker({ userId, profile, profiles, session }) {
                       <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid #1a1a1a" }}>
                         <div style={{ flex: 1 }}>
                           <div style={{ fontSize: 12, fontWeight: 600, color: "#e0ddd8" }}>{e.name}</div>
-                          <div style={{ fontSize: 10, color: "#666", marginTop: 1 }}>
+                          <div style={{ fontSize: 10, color: "#b6b6b6", marginTop: 1 }}>
                             F:{e.fat}g · P:{e.protein}g · NC:{Math.max(0,(e.carbs||0)-(e.fiber||0)).toFixed(1)}g · Na:{e.sodium||0}mg
                           </div>
                         </div>
@@ -2125,7 +2099,7 @@ function UserTracker({ userId, profile, profiles, session }) {
                     ))
                   }
                   <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, paddingTop: 6, borderTop: "1px solid #2a2a2a" }}>
-                    <span style={{ fontSize: 11, color: "#888" }}>Total</span>
+                    <span style={{ fontSize: 11, color: "#c2c2c2" }}>Total</span>
                     <span style={{ fontSize: 13, fontWeight: 700, color: "#c9a96e" }}>{Math.round(day.eaten)} kcal</span>
                   </div>
                 </div>
@@ -2135,19 +2109,19 @@ function UserTracker({ userId, profile, profiles, session }) {
                 ? <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
                   <input type="number" placeholder="burn kcal" defaultValue={day.burn || ""} id={`burn_${day.key}`} style={{ ...s.input, margin: 0, flex: 1, fontSize: 12, padding: "6px 10px" }} />
                   <button onClick={() => saveBurn(day.key, document.getElementById(`burn_${day.key}`).value)} style={s.btn()}>✓</button>
-                  <button onClick={() => setBurnEditDay("")} style={{ ...s.btn("#222", "#888") }}>✕</button>
+                  <button onClick={() => setBurnEditDay("")} style={{ ...s.btn("#222", "#c2c2c2") }}>✕</button>
                 </div>
                 : <div style={{ display: "inline-flex", gap: 6, marginTop: 6 }}>
-                  <button onClick={() => setBurnEditDay(day.key)} style={{ ...s.btn("#1e1e1e", "#666"), padding: "5px 10px", fontSize: 11, border: "1px solid #2a2a2a" }}>
+                  <button onClick={() => setBurnEditDay(day.key)} style={{ ...s.btn("#1e1e1e", "#b6b6b6"), padding: "5px 10px", fontSize: 11, border: "1px solid #2a2a2a" }}>
                     {day.burn ? "Edit burn" : "+ Log burn"}
                   </button>
-                  {day.burn && <button onClick={() => setBurnLog(prev => { const n = {...prev}; delete n[day.key]; return n; })} style={{ ...s.btn("#1e1e1e", "#555"), padding: "5px 10px", fontSize: 11, border: "1px solid #2a2a2a" }}>🗑</button>}
+                  {day.burn && <button onClick={() => setBurnLog(prev => { const n = {...prev}; delete n[day.key]; return n; })} style={{ ...s.btn("#1e1e1e", "#adadad"), padding: "5px 10px", fontSize: 11, border: "1px solid #2a2a2a" }}>🗑</button>}
                   <button onClick={() => setOffDays(prev => { const n = {...prev}; if (n[day.key]) delete n[day.key]; else n[day.key] = true; return n; })}
-                    style={{ ...s.btn(day.isOff ? "#2a1a1a" : "#1e1e1e", day.isOff ? "#ff9966" : "#555"), padding: "5px 10px", fontSize: 11, border: `1px solid ${day.isOff ? "#4a2a1a" : "#2a2a2a"}` }}>
+                    style={{ ...s.btn(day.isOff ? "#2a1a1a" : "#1e1e1e", day.isOff ? "#ff9966" : "#adadad"), padding: "5px 10px", fontSize: 11, border: `1px solid ${day.isOff ? "#4a2a1a" : "#2a2a2a"}` }}>
                     {day.isOff ? "🏖 Off day" : "Mark off day"}<InfoButton topic="offDay" style={{ marginLeft: 4 }} />
                   </button>
                   <button onClick={() => { setAddFoodDay(addFoodDay === day.key ? "" : day.key); setHistoryFoodSearch(""); setExpandedHistoryDay(day.key); }}
-                    style={{ ...s.btn(addFoodDay === day.key ? "#2a2416" : "#1e1e1e", addFoodDay === day.key ? "#c9a96e" : "#666"), padding: "5px 10px", fontSize: 11, border: `1px solid ${addFoodDay === day.key ? "#3a2e1a" : "#2a2a2a"}` }}>
+                    style={{ ...s.btn(addFoodDay === day.key ? "#2a2416" : "#1e1e1e", addFoodDay === day.key ? "#c9a96e" : "#b6b6b6"), padding: "5px 10px", fontSize: 11, border: `1px solid ${addFoodDay === day.key ? "#3a2e1a" : "#2a2a2a"}` }}>
                     {addFoodDay === day.key ? "✕ Close" : "+ Add food"}
                   </button>
                 </div>}
@@ -2161,14 +2135,14 @@ function UserTracker({ userId, profile, profiles, session }) {
                 const hits = q ? pool.filter(f => f.name.toLowerCase().includes(q)).slice(0, 6) : [];
                 return (
                   <div style={{ marginTop: 8, padding: 10, background: "#141414", borderRadius: 10, border: "1px solid #2a2a2a" }}>
-                    <div style={{ fontSize: 11, color: "#888", marginBottom: 6 }}>
+                    <div style={{ fontSize: 11, color: "#c2c2c2", marginBottom: 6 }}>
                       Add a forgotten food to {day.isToday ? "today" : day.date}
                     </div>
                     <input autoFocus placeholder="Search your foods…" value={historyFoodSearch}
                       onChange={e => setHistoryFoodSearch(e.target.value)}
                       style={{ ...s.input, margin: 0, marginBottom: 8, fontSize: 12, padding: "8px 10px" }} />
                     {q && hits.length === 0 && (
-                      <div style={{ fontSize: 11, color: "#555", textAlign: "center", padding: "6px 0" }}>
+                      <div style={{ fontSize: 11, color: "#adadad", textAlign: "center", padding: "6px 0" }}>
                         No match — add it under the Add tab first, then it'll appear here.
                       </div>
                     )}
@@ -2184,16 +2158,16 @@ function UserTracker({ userId, profile, profiles, session }) {
                 ? <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
                   <input type="number" placeholder="eaten kcal" defaultValue={day.eaten || ""} id={`eaten_${day.key}`} style={{ ...s.input, margin: 0, flex: 1, fontSize: 12, padding: "6px 10px" }} />
                   <button onClick={() => saveEaten(day.key, document.getElementById(`eaten_${day.key}`).value)} style={s.btn()}>✓</button>
-                  <button onClick={() => setEatenEditDay("")} style={{ ...s.btn("#222", "#888") }}>✕</button>
+                  <button onClick={() => setEatenEditDay("")} style={{ ...s.btn("#222", "#c2c2c2") }}>✕</button>
                 </div>
-                : !day.isToday && <button onClick={() => setEatenEditDay(day.key)} style={{ ...s.btn("#1e1e1e", "#666"), padding: "5px 10px", fontSize: 11, marginTop: 4, border: "1px solid #2a2a2a", marginLeft: 6 }}>
+                : !day.isToday && <button onClick={() => setEatenEditDay(day.key)} style={{ ...s.btn("#1e1e1e", "#b6b6b6"), padding: "5px 10px", fontSize: 11, marginTop: 4, border: "1px solid #2a2a2a", marginLeft: 6 }}>
                   {day.hasOverride ? "Edit eaten" : "+ Override eaten"}
                 </button>}
 
               {/* Supplement edit */}
               {suppEditDay === day.key
                 ? <div style={{ marginTop: 8, background: "#161616", borderRadius: 10, padding: "10px 12px" }}>
-                  <div style={{ fontSize: 10, color: "#888", marginBottom: 8 }}>Edit supplements for {day.date}</div>
+                  <div style={{ fontSize: 10, color: "#c2c2c2", marginBottom: 8 }}>Edit supplements for {day.date}</div>
                   <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 10, color: "#b5a4f5", marginBottom: 4 }}>Mg (mg)</div>
@@ -2221,11 +2195,11 @@ function UserTracker({ userId, profile, profiles, session }) {
                       });
                       setSuppEditDay("");
                     }} style={s.btn()}>✓ Save</button>
-                    <button onClick={() => setSuppEditDay("")} style={{ ...s.btn("#222", "#888") }}>✕</button>
+                    <button onClick={() => setSuppEditDay("")} style={{ ...s.btn("#222", "#c2c2c2") }}>✕</button>
                   </div>
                 </div>
                 : <button onClick={() => setSuppEditDay(day.key)}
-                  style={{ ...s.btn("#1e1e1e", "#666"), padding: "5px 10px", fontSize: 11, marginTop: 4, border: "1px solid #2a2a2a" }}>
+                  style={{ ...s.btn("#1e1e1e", "#b6b6b6"), padding: "5px 10px", fontSize: 11, marginTop: 4, border: "1px solid #2a2a2a" }}>
                   {suppLog[day.key] ? `💊 Mg:${suppLog[day.key].mag}mg K:${suppLog[day.key].pot || "OFF"}` : "+ Log supplements"}
                 </button>}
             </div>
@@ -2263,7 +2237,7 @@ function UserTracker({ userId, profile, profiles, session }) {
             <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: "0.02em" }}>Quick Log</span>
           </button>
           <button onClick={() => setFabHidden(true)} aria-label="Hide"
-            style={{ position: "absolute", top: -7, right: -7, width: 24, height: 24, borderRadius: "50%", border: "1px solid #3a3a3a", background: "#1e1e1e", color: "#999", fontSize: 13, lineHeight: "22px", padding: 0, cursor: "pointer" }}>×</button>
+            style={{ position: "absolute", top: -7, right: -7, width: 24, height: 24, borderRadius: "50%", border: "1px solid #3a3a3a", background: "#1e1e1e", color: "#c8c8c8", fontSize: 13, lineHeight: "22px", padding: 0, cursor: "pointer" }}>×</button>
         </div>
       )}
 
@@ -2324,7 +2298,7 @@ function ShareProfile({ profileId, profileName, session, onClose }) {
 
   const s = {
     container: { padding: 20 },
-    label: { fontSize: 11, color: "#888", marginBottom: 4, display: "block" },
+    label: { fontSize: 11, color: "#c2c2c2", marginBottom: 4, display: "block" },
     input: { width: "100%", background: "#111", border: "1px solid #333", borderRadius: 10, padding: "10px 14px", color: "#e0e0e0", fontSize: 14, marginBottom: 10, boxSizing: "border-box" },
     select: { width: "100%", background: "#111", border: "1px solid #333", borderRadius: 10, padding: "10px 14px", color: "#e0e0e0", fontSize: 14, marginBottom: 10, boxSizing: "border-box" },
     btn: { width: "100%", background: "#c9a96e", border: "none", borderRadius: 10, padding: "12px 0", color: "#111", fontSize: 14, fontWeight: 700, cursor: "pointer" },
@@ -2333,7 +2307,7 @@ function ShareProfile({ profileId, profileName, session, onClose }) {
 
   return (
     <div style={s.container}>
-      <div style={{ fontSize: 14, color: "#888", marginBottom: 20 }}>
+      <div style={{ fontSize: 14, color: "#c2c2c2", marginBottom: 20 }}>
         Share <strong style={{ color: "#c9a96e" }}>{profileName}</strong> with others so they can view or manage this profile.
       </div>
 
@@ -2355,13 +2329,13 @@ function ShareProfile({ profileId, profileName, session, onClose }) {
 
       {existing.length > 0 && (
         <>
-          <div style={{ fontSize: 11, color: "#555", letterSpacing: 1, textTransform: "uppercase", marginBottom: 10 }}>Shared with</div>
+          <div style={{ fontSize: 11, color: "#adadad", letterSpacing: 1, textTransform: "uppercase", marginBottom: 10 }}>Shared with</div>
           {existing.map((p, i) => (
             <div key={i} style={s.card}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
                   <div style={{ fontSize: 13, color: "#e0e0e0" }}>{p.invited_email}</div>
-                  <div style={{ fontSize: 11, color: "#888", marginTop: 2, textTransform: "capitalize" }}>{p.permission} · {p.accepted ? "Active" : "Pending"}</div>
+                  <div style={{ fontSize: 11, color: "#c2c2c2", marginTop: 2, textTransform: "capitalize" }}>{p.permission} · {p.accepted ? "Active" : "Pending"}</div>
                 </div>
               </div>
             </div>
@@ -2369,7 +2343,7 @@ function ShareProfile({ profileId, profileName, session, onClose }) {
         </>
       )}
 
-      <button onClick={onClose} style={{ width: "100%", background: "none", border: "1px solid #333", borderRadius: 10, padding: "10px 0", color: "#888", fontSize: 13, cursor: "pointer", marginTop: 10 }}>
+      <button onClick={onClose} style={{ width: "100%", background: "none", border: "1px solid #333", borderRadius: 10, padding: "10px 0", color: "#c2c2c2", fontSize: 13, cursor: "pointer", marginTop: 10 }}>
         Done
       </button>
     </div>
@@ -2392,10 +2366,10 @@ function ProfileSetup({ profile, onSave, onCancel, isNew }) {
   const icons = ["🧑","🧔","👩","👨","🧓","👴","👵","🏃","🏊","🚴"];
 
   const s = {
-    label: { fontSize: 11, color: "#888", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 },
+    label: { fontSize: 11, color: "#c2c2c2", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 },
     input: { width: "100%", background: "#1e1e1e", border: "1px solid #333", borderRadius: 10, padding: "10px 14px", color: "#f0ede8", fontSize: 14, outline: "none", boxSizing: "border-box" },
     row: { marginBottom: 16 },
-    seg: (active) => ({ flex: 1, padding: "8px 0", borderRadius: 8, border: `1px solid ${active ? "#c9a96e" : "#2a2a2a"}`, background: active ? "#2a1e0a" : "transparent", color: active ? "#c9a96e" : "#666", fontWeight: 600, fontSize: 12, cursor: "pointer" }),
+    seg: (active) => ({ flex: 1, padding: "8px 0", borderRadius: 8, border: `1px solid ${active ? "#c9a96e" : "#2a2a2a"}`, background: active ? "#2a1e0a" : "transparent", color: active ? "#c9a96e" : "#b6b6b6", fontWeight: 600, fontSize: 12, cursor: "pointer" }),
   };
 
   return (
@@ -2487,35 +2461,15 @@ function ProfileSetup({ profile, onSave, onCancel, isNew }) {
           <InfoButton topic="loggingBias" />
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-          <span style={{ fontSize: 11, color: "#666", minWidth: 60 }}>Too little</span>
+          <span style={{ fontSize: 11, color: "#b6b6b6", minWidth: 60 }}>Too little</span>
           <input type="range" min="-20" max="20" step="5"
             value={form.loggingBias ?? 0}
             onChange={e => set("loggingBias", Number(e.target.value))}
             style={{ flex: 1, accentColor: "#c9a96e" }} />
-          <span style={{ fontSize: 11, color: "#666", minWidth: 55, textAlign: "right" }}>Too much</span>
+          <span style={{ fontSize: 11, color: "#b6b6b6", minWidth: 55, textAlign: "right" }}>Too much</span>
         </div>
         <div style={{ textAlign: "center", fontSize: 13, fontWeight: 700, color: (form.loggingBias ?? 0) === 0 ? "#7ec8a4" : "#c9a96e" }}>
           {(form.loggingBias ?? 0) === 0 ? "Accurate (0% adjustment)" : (form.loggingBias ?? 0) > 0 ? `+${form.loggingBias}% added to logged totals` : `${form.loggingBias}% removed from logged totals`}
-        </div>
-      </div>
-
-      {/* Quick Log bias */}
-      <div style={s.row}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-          <div style={s.label}>⚡ Quick Log Accuracy Factor</div>
-          <InfoButton topic="quickLogBias" />
-        </div>
-        <div style={{ fontSize: 11, color: "#c9a96e", marginBottom: 8 }}>AI tends to underestimate — we recommend starting at +15%</div>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-          <span style={{ fontSize: 11, color: "#666", minWidth: 30 }}>0%</span>
-          <input type="range" min="0" max="40" step="5"
-            value={form.quickLogBias ?? 15}
-            onChange={e => set("quickLogBias", Number(e.target.value))}
-            style={{ flex: 1, accentColor: "#c9a96e" }} />
-          <span style={{ fontSize: 11, color: "#666", minWidth: 30, textAlign: "right" }}>+40%</span>
-        </div>
-        <div style={{ textAlign: "center", fontSize: 13, fontWeight: 700, color: "#c9a96e" }}>
-          +{form.quickLogBias ?? 15}% added to Quick Log totals
         </div>
       </div>
 
@@ -2575,11 +2529,11 @@ function ProfileSetup({ profile, onSave, onCancel, isNew }) {
             ["customPotassium", "Potassium (mg)", 100, 500, 5000],
           ].map(([k, l, step, min, max]) => (
             <div key={k}>
-              <div style={{ fontSize: 10, color: "#888", marginBottom: 4 }}>{l}</div>
+              <div style={{ fontSize: 10, color: "#c2c2c2", marginBottom: 4 }}>{l}</div>
               <div style={{ display: "flex", alignItems: "center", background: "#1e1e1e", border: "1px solid #333", borderRadius: 10, overflow: "hidden" }}>
                 <button onClick={() => set(k, Math.max(min, (form[k] ?? 0) - step))}
                   style={{ background: "none", border: "none", color: "#aaa", fontSize: 16, padding: "8px 10px", cursor: "pointer", lineHeight: 1 }}>−</button>
-                <div style={{ flex: 1, textAlign: "center", fontSize: 12, color: form[k] !== undefined ? "#c9a96e" : "#555", fontWeight: form[k] !== undefined ? 700 : 400 }}>
+                <div style={{ flex: 1, textAlign: "center", fontSize: 12, color: form[k] !== undefined ? "#c9a96e" : "#adadad", fontWeight: form[k] !== undefined ? 700 : 400 }}>
                   {form[k] !== undefined ? form[k] : "auto"}
                 </div>
                 <button onClick={() => set(k, Math.min(max, (form[k] ?? (k === "customSodium" ? 2300 : k === "customMagnesium" ? 420 : k === "customPotassium" ? 3500 : k === "customCarbs" ? 80 : k === "customFiber" ? 25 : 100)) + step))}
@@ -2587,18 +2541,18 @@ function ProfileSetup({ profile, onSave, onCancel, isNew }) {
               </div>
               {form[k] !== undefined && (
                 <button onClick={() => set(k, undefined)}
-                  style={{ fontSize: 9, color: "#555", background: "none", border: "none", cursor: "pointer", padding: "2px 0" }}>reset to auto</button>
+                  style={{ fontSize: 9, color: "#adadad", background: "none", border: "none", cursor: "pointer", padding: "2px 0" }}>reset to auto</button>
               )}
             </div>
           ))}
         </div>
-        <div style={{ fontSize: 10, color: "#555", marginTop: 6 }}>Values shown as "auto" use calculated defaults. Tap + to override.</div>
+        <div style={{ fontSize: 10, color: "#adadad", marginTop: 6 }}>Values shown as "auto" use calculated defaults. Tap + to override.</div>
       </div>
 
       {/* Live preview */}
       {preview && (
         <div style={{ background: "#161616", borderRadius: 12, padding: "12px 16px", marginBottom: 20, border: "1px solid #2a2a2a" }}>
-          <div style={{ fontSize: 11, color: "#888", letterSpacing: 1, textTransform: "uppercase", marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>Calculated Targets Preview <InfoButton topic="calorieTarget" /></div>
+          <div style={{ fontSize: 11, color: "#c2c2c2", letterSpacing: 1, textTransform: "uppercase", marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>Calculated Targets Preview <InfoButton topic="calorieTarget" /></div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, fontSize: 12 }}>
             {[
               ["Daily calories", `${preview.calories} kcal`],
@@ -2611,7 +2565,7 @@ function ProfileSetup({ profile, onSave, onCancel, isNew }) {
               ["Potassium", `${mineralPreview.potassium}mg`],
             ].map(([l,v]) => (
               <div key={l} style={{ background: "#111", borderRadius: 8, padding: "6px 10px" }}>
-                <span style={{ color: "#666" }}>{l}: </span>
+                <span style={{ color: "#b6b6b6" }}>{l}: </span>
                 <span style={{ color: "#c9a96e", fontWeight: 700 }}>{v}</span>
               </div>
             ))}
@@ -2623,11 +2577,11 @@ function ProfileSetup({ profile, onSave, onCancel, isNew }) {
       <div style={{ display: "flex", gap: 10 }}>
         <button onClick={() => onSave(form)}
           disabled={!form.name}
-          style={{ flex: 1, background: form.name ? "#c9a96e" : "#333", border: "none", borderRadius: 12, padding: "12px 0", color: form.name ? "#111" : "#666", fontWeight: 800, fontSize: 14, cursor: form.name ? "pointer" : "default" }}>
+          style={{ flex: 1, background: form.name ? "#c9a96e" : "#333", border: "none", borderRadius: 12, padding: "12px 0", color: form.name ? "#111" : "#b6b6b6", fontWeight: 800, fontSize: 14, cursor: form.name ? "pointer" : "default" }}>
           {isNew ? "Create Profile" : "Save Changes"}
         </button>
         {onCancel && <button onClick={onCancel}
-          style={{ padding: "12px 20px", background: "#1e1e1e", border: "1px solid #333", borderRadius: 12, color: "#888", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>
+          style={{ padding: "12px 20px", background: "#1e1e1e", border: "1px solid #333", borderRadius: 12, color: "#c2c2c2", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>
           Cancel
         </button>}
       </div>
@@ -2645,7 +2599,7 @@ function HelpItem({ title, icon, text }) {
       <button onClick={() => setOpen(o => !o)}
         style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", background: "none", border: "none", color: "#f0ede8", cursor: "pointer", textAlign: "left" }}>
         <span style={{ fontSize: 14, fontWeight: 700 }}>{icon} {title}</span>
-        <span style={{ fontSize: 12, color: "#555" }}>{open ? "▲" : "▼"}</span>
+        <span style={{ fontSize: 12, color: "#adadad" }}>{open ? "▲" : "▼"}</span>
       </button>
       {open && (
         <div style={{ padding: "0 16px 16px", fontSize: 13, color: "#ccc", lineHeight: 1.7, whiteSpace: "pre-line", borderTop: "1px solid #222" }}>
@@ -2682,7 +2636,7 @@ function ResetPasswordScreen({ session, onDone }) {
     <div style={ls.container}>
       <div style={ls.card}>
         <div style={{ fontSize: 22, fontWeight: 800, color: "#c9a96e", marginBottom: 6, textAlign: "center" }}>Set New Password</div>
-        <div style={{ fontSize: 12, color: "#555", textAlign: "center", marginBottom: 24 }}>Choose a new password for your account</div>
+        <div style={{ fontSize: 12, color: "#adadad", textAlign: "center", marginBottom: 24 }}>Choose a new password for your account</div>
         <input style={ls.inp} type="password" placeholder="New password" value={password}
           onChange={e => setPassword(e.target.value)} autoComplete="new-password" />
         <input style={ls.inp} type="password" placeholder="Confirm password" value={confirm}
@@ -2710,10 +2664,10 @@ function LoginScreen({ onAuth }) {
     container: { minHeight: "100vh", background: "#111", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 },
     card: { background: "#1a1a1a", borderRadius: 16, padding: 32, width: "100%", maxWidth: 360, border: "1px solid #2a2a2a" },
     title: { fontSize: 24, fontWeight: 800, color: "#c9a96e", marginBottom: 6, textAlign: "center" },
-    sub: { fontSize: 12, color: "#555", textAlign: "center", marginBottom: 28 },
+    sub: { fontSize: 12, color: "#adadad", textAlign: "center", marginBottom: 28 },
     inp: { width: "100%", background: "#111", border: "1px solid #333", borderRadius: 10, padding: "12px 14px", color: "#e0e0e0", fontSize: 14, marginBottom: 12, boxSizing: "border-box" },
     btn: { width: "100%", background: "#c9a96e", border: "none", borderRadius: 10, padding: "13px 0", color: "#111", fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 16 },
-    toggle: { textAlign: "center", fontSize: 13, color: "#555" },
+    toggle: { textAlign: "center", fontSize: 13, color: "#adadad" },
     link: { color: "#c9a96e", cursor: "pointer", textDecoration: "underline" },
     err: { color: "#ff6b6b", fontSize: 12, marginBottom: 12, textAlign: "center" },
     suc: { color: "#7ec8a4", fontSize: 12, marginBottom: 12, textAlign: "center" },
@@ -2771,7 +2725,7 @@ function LoginScreen({ onAuth }) {
         </div>
         {mode === "signin" && (
           <div style={{ textAlign: "center", marginTop: 14 }}>
-            <span style={{ ...ls.link, fontSize: 12, color: "#555" }} onClick={async () => {
+            <span style={{ ...ls.link, fontSize: 12, color: "#adadad" }} onClick={async () => {
               if (!email.trim()) { setError("Enter your email above first"); return; }
               setLoading(true); setError("");
               const ok = await sendPasswordReset(email.trim());
@@ -3070,13 +3024,13 @@ function KetoTrackerInner() {
       <div style={{ minHeight: "100vh", background: "#111", color: "#f0ede8", fontFamily: "system-ui, sans-serif", maxWidth: 420, margin: "0 auto" }}>
         <div style={{ background: "linear-gradient(135deg, #1a1a1a 0%, #141414 100%)", borderBottom: "1px solid #2a2a2a", padding: "20px 20px 16px" }}>
           <div style={{ fontSize: 18, fontWeight: 800, color: "#f0ede8" }}>Profile Invitations</div>
-          <div style={{ fontSize: 12, color: "#888", marginTop: 4 }}>Someone has shared their profile with you</div>
+          <div style={{ fontSize: 12, color: "#c2c2c2", marginTop: 4 }}>Someone has shared their profile with you</div>
         </div>
         <div style={{ padding: 20 }}>
           {pendingInvites.map((invite, i) => (
             <div key={i} style={{ background: "#1a1a1a", borderRadius: 12, padding: 16, marginBottom: 12, border: "1px solid #2a2a2a" }}>
               <div style={{ fontSize: 14, color: "#c9a96e", fontWeight: 700, marginBottom: 4 }}>Profile Invitation</div>
-              <div style={{ fontSize: 12, color: "#888", marginBottom: 12 }}>
+              <div style={{ fontSize: 12, color: "#c2c2c2", marginBottom: 12 }}>
                 You've been invited as a <strong style={{ color: "#e0e0e0", textTransform: "capitalize" }}>{invite.permission}</strong> — you can {invite.permission === "viewer" ? "view" : "view and edit"} this person's nutrition log.
               </div>
               <div style={{ display: "flex", gap: 8 }}>
@@ -3102,13 +3056,13 @@ function KetoTrackerInner() {
                     setPendingInvites(prev => prev.filter(p => p.id !== invite.id));
                     if (pendingInvites.length <= 1) setShowInvites(false);
                   } catch {}
-                }} style={{ flex: 1, background: "none", border: "1px solid #333", borderRadius: 8, padding: "10px 0", color: "#888", fontSize: 13, cursor: "pointer" }}>
+                }} style={{ flex: 1, background: "none", border: "1px solid #333", borderRadius: 8, padding: "10px 0", color: "#c2c2c2", fontSize: 13, cursor: "pointer" }}>
                   Decline
                 </button>
               </div>
             </div>
           ))}
-          <button onClick={() => setShowInvites(false)} style={{ width: "100%", background: "none", border: "1px solid #333", borderRadius: 10, padding: "10px 0", color: "#888", fontSize: 13, cursor: "pointer", marginTop: 8 }}>
+          <button onClick={() => setShowInvites(false)} style={{ width: "100%", background: "none", border: "1px solid #333", borderRadius: 10, padding: "10px 0", color: "#c2c2c2", fontSize: 13, cursor: "pointer", marginTop: 8 }}>
             Skip for now
           </button>
         </div>
@@ -3122,7 +3076,7 @@ function KetoTrackerInner() {
       <div style={{ minHeight: "100vh", background: "#111", color: "#f0ede8", fontFamily: "system-ui, sans-serif", maxWidth: 420, margin: "0 auto" }}>
         <div style={{ background: "linear-gradient(135deg, #1a1a1a 0%, #141414 100%)", borderBottom: "1px solid #2a2a2a", padding: "20px 20px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div style={{ fontSize: 18, fontWeight: 800, color: "#f0ede8" }}>Share Profile</div>
-          <button onClick={() => setShowShare(null)} style={{ background: "none", border: "none", color: "#888", fontSize: 20, cursor: "pointer" }}>×</button>
+          <button onClick={() => setShowShare(null)} style={{ background: "none", border: "none", color: "#c2c2c2", fontSize: 20, cursor: "pointer" }}>×</button>
         </div>
         <ShareProfile profileId={showShare} profileName={sharingProfile?.name || "Profile"} session={session} onClose={() => setShowShare(null)} />
       </div>
@@ -3162,7 +3116,7 @@ function KetoTrackerInner() {
     <div style={{ minHeight: "100vh", background: "#111", color: "#f0ede8", fontFamily: "system-ui, sans-serif", maxWidth: 420, margin: "0 auto", paddingBottom: 40 }}>
       <div style={{ background: "linear-gradient(135deg, #1a1a1a 0%, #141414 100%)", borderBottom: "1px solid #2a2a2a", padding: "20px 20px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 10 }}>
         <div style={{ fontSize: 18, fontWeight: 800, color: "#f0ede8" }}>Help & Guide</div>
-        <button onClick={() => setShowHelp(false)} style={{ background: "none", border: "1px solid #333", borderRadius: 8, padding: "6px 14px", color: "#888", fontSize: 13, cursor: "pointer" }}>✕ Close</button>
+        <button onClick={() => setShowHelp(false)} style={{ background: "none", border: "1px solid #333", borderRadius: 8, padding: "6px 14px", color: "#c2c2c2", fontSize: 13, cursor: "pointer" }}>✕ Close</button>
       </div>
       <div style={{ padding: "16px 16px 0" }}>
         {[
@@ -3177,7 +3131,6 @@ function KetoTrackerInner() {
           { title: "Magnesium", icon: "💜", content: "The magnesium target is based on the NIH RDA: 420mg/day for men and 320mg/day for women aged 31+. Low-carb and Mediterranean diets can deplete magnesium faster. You can adjust your supplement dose daily with consideration to your intake from food — if food sources already covered a significant portion, reduce the supplement accordingly." },
           { title: "Glucose and Ketone Readings", icon: "🩸", content: "Access this feature via the Readings tab at the bottom of the screen. Log glucose and ketone readings to track your metabolic health directly. Best times: fasting glucose first thing in the morning, post-meal glucose 1-2 hours after eating, ketones in the afternoon or before bed. Target ranges: fasting glucose 4.0-5.5 mmol/L, post-meal under 7.8 mmol/L, nutritional ketosis 0.5-3.0 mmol/L. You can also log blood pressure readings." },
           { title: "Trends", icon: "📈", content: "Access this via the Trends tab at the bottom of the screen. Charts show your daily values over the selected time range (7, 30, 90 days or all time). The horizontal line is your target. The average shown top-right tells you how you are tracking — if it is consistently below your target you may need to adjust your diet or supplements." },
-          { title: "Quick Log Accuracy", icon: "⚡", content: "AI-based Quick Log tends to underestimate calorie intake. It assumes modest portion sizes, cannot see the actual plate, and often misses added cooking fats. We recommend setting the Quick Log adjustment to at least +15% as a starting point. You can adjust this in your profile settings." },
           { title: "Personal Accuracy Factor", icon: "⚖️", content: "Food logging is never perfectly accurate. Research consistently shows people underestimate calorie intake by 20-40% on average. This factor lets you calibrate your logs to match your actual eating patterns. The adjustment applies to total calorie and macro summaries only — individual food entries are unchanged." },
           { title: "Off Days", icon: "🏖", content: "Marking a day as Off Day excludes it from your deficit totals and trend charts. Use this for social occasions, travel or days when tracking was not practical. It keeps your data clean without counting zero-intake days against your averages." },
         ].map(({ title, icon, content: text }, i) => (
@@ -3198,7 +3151,7 @@ function KetoTrackerInner() {
           </div>
           <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
             <button onClick={() => setShowSetup(activeUser)}
-              style={{ background: "none", border: "1px solid #333", borderRadius: 8, padding: "6px 10px", color: "#888", fontSize: 11, cursor: "pointer" }}>
+              style={{ background: "none", border: "1px solid #333", borderRadius: 8, padding: "6px 10px", color: "#c2c2c2", fontSize: 11, cursor: "pointer" }}>
               ⚙️ Edit
             </button>
             <button onClick={() => window.location.reload()}
@@ -3210,7 +3163,7 @@ function KetoTrackerInner() {
               ?
             </button>
             <button onClick={handleSignOut}
-              style={{ background: "none", border: "1px solid #333", borderRadius: 8, padding: "6px 10px", color: "#666", fontSize: 11, cursor: "pointer" }}>
+              style={{ background: "none", border: "1px solid #333", borderRadius: 8, padding: "6px 10px", color: "#b6b6b6", fontSize: 11, cursor: "pointer" }}>
               Sign Out
             </button>
           </div>
@@ -3220,7 +3173,7 @@ function KetoTrackerInner() {
         <div style={{ display: "flex", gap: 0, borderBottom: "1px solid #2a2a2a", overflowX: "auto" }}>
           {profiles.map(p => (
             <button key={p.id} onClick={() => setActiveUser(p.id)}
-              style={{ padding: "10px 16px", background: "none", border: "none", borderBottom: activeUser === p.id ? "2px solid #c9a96e" : "2px solid transparent", color: activeUser === p.id ? "#c9a96e" : "#555", fontWeight: 700, fontSize: 14, cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap" }}>
+              style={{ padding: "10px 16px", background: "none", border: "none", borderBottom: activeUser === p.id ? "2px solid #c9a96e" : "2px solid transparent", color: activeUser === p.id ? "#c9a96e" : "#adadad", fontWeight: 700, fontSize: 14, cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap" }}>
               {p.icon} {p.name}
             </button>
           ))}
